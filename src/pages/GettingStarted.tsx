@@ -18,10 +18,15 @@ extend({
 });
 
 export default function GettingStarted() {
-    const [bunnySpeed, setBunnySpeed] = useState(1);
+    const [bunnyMoveSpeed, setBunnyMoveSpeed] = useState(1);
+    const [bunnyRotationSpeed, setBunnyRotationSpeed] = useState(0.1);
 
-    const handleRangeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        setBunnySpeed(parseInt(e.target.value));
+    const handleBunnyMoveSpeedChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        setBunnyMoveSpeed(parseInt(e.target.value));
+    }
+
+    const handleBunnyRotationSpeedChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        setBunnyRotationSpeed(parseInt(e.target.value) / 10);
     }
 
     return (
@@ -42,12 +47,25 @@ export default function GettingStarted() {
                             min={1}
                             max={10}
                             step={1}
-                            value={bunnySpeed}
-                            onChange={handleRangeChange} />
+                            value={bunnyMoveSpeed}
+                            onChange={handleBunnyMoveSpeedChange} />
+                    </div>
+                    <div className='flex flex-col'>
+                        <label htmlFor="bunny-speed">
+                            Bunny rotation speed
+                        </label>
+                        <input
+                            id='bunny-speed'
+                            type='range'
+                            min={1}
+                            max={10}
+                            step={1}
+                            value={bunnyRotationSpeed * 10}
+                            onChange={handleBunnyRotationSpeedChange} />
                     </div>
                 </div>
                 <Application>
-                    <GettingStartedStage bunnySpeed={bunnySpeed} />
+                    <GettingStartedStage bunnyMoveSpeed={bunnyMoveSpeed} bunnyRotationSpeed={bunnyRotationSpeed} />
                 </Application>
             </div>
         </div>

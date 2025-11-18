@@ -6,10 +6,11 @@ import { useState } from 'react';
 import { BunnySprite } from '../components/BunnySprite';
 
 interface GettingStartedStageProps {
-    bunnySpeed: number
+    bunnyMoveSpeed: number;
+    bunnyRotationSpeed: number;
 }
 
-export function GettingStartedStage({ bunnySpeed }: GettingStartedStageProps) {
+export function GettingStartedStage({ bunnyMoveSpeed, bunnyRotationSpeed }: GettingStartedStageProps) {
     const [isActive, setIsActive] = useState(false);
     const [xPos, setXPos] = useState(150);
     const [direction, setDirection] = useState(1);
@@ -28,9 +29,9 @@ export function GettingStartedStage({ bunnySpeed }: GettingStartedStageProps) {
             tempDirection = 1;
         }
 
-        tempXPos = tempXPos + tempDirection * delta * bunnySpeed;
+        tempXPos = tempXPos + tempDirection * delta * bunnyMoveSpeed;
 
-        setRotation(prev => prev + 0.1);
+        setRotation(prev => prev + bunnyRotationSpeed);
         setDirection(tempDirection);
         setXPos(tempXPos);
     });
