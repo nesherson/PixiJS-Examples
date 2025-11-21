@@ -32,7 +32,7 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
         <div className="flex h-screen w-full bg-slate-50 overflow-hidden">
             <aside className="w-64 bg-slate-900 flex flex-col shrink-0">
                 <div className="p-6 border-b border-slate-800">
-                    <h2 className="text-xl font-bold text-white tracking-wider">Pixi Learning</h2>
+                    <h2 className="text-xl font-bold text-white tracking-wider">PixiJS Learning</h2>
                 </div>
 
                 <nav className="flex-1 px-4 py-6 space-y-2">
