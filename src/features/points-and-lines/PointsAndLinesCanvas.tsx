@@ -2,19 +2,27 @@ import { Application, useExtend } from "@pixi/react";
 import { Container, FederatedPointerEvent, Graphics, Rectangle, Sprite, Texture, type EventMode } from "pixi.js";
 import { useState } from "react";
 
-interface Shape {
-    x: number;
-    y: number;
-    size: number
-}
-
 interface Point {
     x: number;
     y: number;
 }
 
+interface ConnectingPoint {
+    id: string;
+    position: Point;
+    isSelected: boolean;
+    color: string;
+    size: number
+}
+
 interface Line {
     startPos: Point;
+    endPos: Point;
+}
+
+interface CurvedLine {
+    startPos: Point;
+    controlPos: Point;
     endPos: Point;
 }
 
@@ -24,18 +32,9 @@ export function PointsAndLinesCanvas() {
     const canvasHeight = 720;
 
     const [location, setLocation] = useState({ x: 0, y: 0 });
-    const [points, setPoints] = useState<Shape[]>([]);
-    const [selectedPoints, setSelectedPoints] = useState<Shape[]>([]);
-    const [connectingLines, setConnectingLines] = useState<Line[]>([]);
-    const [line, setLine] = useState({
-        startPos: { x: 0, y: 0 },
-        endPos: { x: 0, y: 0 },
-    });
-    const [curvedLine, setCurvedLine] = useState({
-        startPos: { x: 0, y: 0 },
-        controlPos: { x: 0, y: 0 },
-        endPos: { x: 0, y: 0 },
-    });
+    const [points, setPoints] = useState<ConnectingPoint[]>([]);
+    const [straightLines, setStraightLines] = useState<Line[]>([]);
+    const [curvedLine, setCurvedLine] = useState<CurvedLine | null>(null);
     const [isDrawingLine, setIsDrawingLine] = useState(false);
     const [pointSize, setPointSize] = useState(8);
 
@@ -49,63 +48,78 @@ export function PointsAndLinesCanvas() {
         setLocation({ x: e.nativeEvent.offsetX, y: e.nativeEvent.offsetY });
         setPoints(prev => [
             ...prev,
-            { x: e.nativeEvent.offsetX, y: e.nativeEvent.offsetY, size: pointSize }
+            {
+                id: crypto.randomUUID(),
+                isSelected: false,
+                position: {
+                    x: e.nativeEvent.offsetX,
+                    y: e.nativeEvent.offsetY,
+                },
+                size: pointSize,
+                color: '#ff4d4d'
+            }
         ]);
     }
 
     function handleClearBtnClick() {
         setPoints([]);
-        setSelectedPoints([]);
-        setConnectingLines([])
+        setStraightLines([])
+        setCurvedLine(null);
     }
 
     function handlePrintBtnClick() {
-        if (!line) return;
+        // if (!line) return;
 
-        console.log(line.startPos);
+        // console.log(line.startPos);
     }
 
-    function handlePointClick(selectedPoint: Point) {
-        // const xPos = e.target.x + e.target.width / 2;
-        // const yPos = e.target.y + e.target.height / 2;
+    function handlePointClick(selectedPoint: ConnectingPoint) {
+        selectedPoint.isSelected = !selectedPoint.isSelected;
 
-        // if (isDrawingLine) {
-        //     setConnectingLines(prev => [
-        //         ...prev,
-        //         {
-        //             startPos: { x: line?.startPos.x, y: line?.startPos.y },
-        //             endPos: { x: xPos, y: yPos }
-        //         }
-        //     ]);
-        //     setIsDrawingLine(false);
-
-        //     return;
-        // }
-
-        // setLine({
-        //     startPos: { x: xPos, y: yPos },
-        //     endPos: { x: xPos, y: yPos }
-        // });
-        // setIsDrawingLine(true);
-    }
-
-    function handleMouseMove(e: FederatedPointerEvent) {
-        if (!isDrawingLine)
-            return;
-
-        // setLine(prev => ({
-        //     ...prev,
-        //     endPos: { x: e.global.x, y: e.global.y }
-        // }));
+        setPoints(prev => [
+            ...prev.filter(p => p.id !== selectedPoint.id),
+            selectedPoint
+        ]);
     }
 
     function handleDrawCurve() {
-        setCurvedLine({
-            startPos: { x: selectedPoints[0].x, y:  selectedPoints[0].y },
-            controlPos: { x:  selectedPoints[1].x, y:  selectedPoints[1].y },
-            endPos: { x:  selectedPoints[2].x, y:  selectedPoints[2].y },
-        });
+        // setCurvedLine({
+        //     startPos: { x: selectedPoints[0].x, y: selectedPoints[0].y },
+        //     controlPos: { x: selectedPoints[1].x, y: selectedPoints[1].y },
+        //     endPos: { x: selectedPoints[2].x, y: selectedPoints[2].y },
+        // });
     }
+
+    function handleDrawStraight() {
+        const selectedPoints = points.filter(p => p.isSelected);
+
+        if (selectedPoints.length === 0)
+            return;
+
+        const newLines: Line[] = [];
+
+        for (let i = 0; i < selectedPoints.length; i++) {
+
+            console.log(selectedPoints[i + 1]);
+
+            const point = selectedPoints[i];
+            const nextPoint = selectedPoints[i + 1];
+
+            if (!nextPoint)
+                break;
+
+            const newLine = {
+                startPos: { x: point.position.x, y: point.position.y },
+                endPos: { x: nextPoint.position.x, y: nextPoint.position.y }
+            }
+
+            newLines.push(newLine);
+
+        };
+
+        setStraightLines(newLines);
+    }
+
 
     return (
         <div>
@@ -124,8 +138,12 @@ export function PointsAndLinesCanvas() {
                     onClick={handlePrintBtnClick}>Print</button>
                 <button
                     className="bg-blue-500 px-2 py-1 rounded-xs hover:bg-blue-400"
+                    onClick={handleDrawStraight}
+                    disabled={false}>Draw straight</button>
+                <button
+                    className="bg-blue-500 px-2 py-1 rounded-xs hover:bg-blue-400"
                     onClick={handleDrawCurve}
-                    disabled={selectedPoints.length < 3}>Draw curve</button>
+                    disabled={true}>Draw curve</button>
             </div>
             <Application
                 width={canvasWidth}
@@ -135,51 +153,45 @@ export function PointsAndLinesCanvas() {
                 <pixiContainer
                     eventMode='static'
                     hitArea={new Rectangle(0, 0, canvasWidth, canvasHeight)}
-                    onPointerDown={handleCanvasClick}
-                    onPointerMove={handleMouseMove}>
+                    onPointerDown={handleCanvasClick}>
                 </pixiContainer>
                 <pixiSprite
                     width={canvasWidth}
                     height={canvasHeight}
                     eventMode='static'
                     onClick={handleCanvasClick}
-                    onMouseMove={handleMouseMove}
                     texture={Texture.EMPTY} />
                 {points.map(s => (
                     <Point
                         key={crypto.randomUUID()}
-                        x={s.x}
-                        y={s.y}
+                        x={s.position.x}
+                        y={s.position.y}
                         size={s.size}
-                        color='red'
+                        color={s.isSelected ? '#66ff66' : s.color}
                         eventMode='static'
                         onClick={() => handlePointClick(s)} />
                 ))}
-                {connectingLines.map(l => (
+                {straightLines.map(l => (
                     <pixiGraphics
                         key={crypto.randomUUID()}
                         draw={(g) => {
                             g.clear();
                             g.moveTo(l.startPos.x, l.startPos.y);
                             g.lineTo(l.endPos.x, l.endPos.y);
-                            g.stroke({ color: 'green', width: 2 });
+                            g.stroke({ color: '#a6a6a6', width: 2 });
                         }} />
                 ))}
-                {isDrawingLine && line.endPos &&
+                {curvedLine &&
                     <pixiGraphics
                         draw={(g) => {
                             g.clear();
-                            g.moveTo(line.startPos.x, line.startPos.y);
-                            g.lineTo(line.endPos.x, line.endPos.y);
+                            g.moveTo(curvedLine.startPos.x, curvedLine.startPos.y);
+                            g.quadraticCurveTo(2 * curvedLine.controlPos.x - (curvedLine.startPos.x + curvedLine.endPos.x) / 2,
+                                2 * curvedLine.controlPos.y - (curvedLine.startPos.y + curvedLine.endPos.y) / 2,
+                                curvedLine.endPos.x,
+                                curvedLine.endPos.y, 3);
                             g.stroke({ color: 'green', width: 2 });
                         }} />}
-                <pixiGraphics
-                    draw={(g) => {
-                        g.clear();
-                        g.moveTo(50, 300);
-                        g.quadraticCurveTo(150, 200, 250, 300);
-                        g.stroke({ color: 'green', width: 2 });
-                    }} />
             </Application>
         </div>
     );
