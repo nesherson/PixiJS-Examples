@@ -1,30 +1,8 @@
 import { Application, useExtend } from "@pixi/react";
-import { Container, FederatedPointerEvent, Graphics, Rectangle, Sprite, Texture, type EventMode } from "pixi.js";
+import { Container, FederatedPointerEvent, Graphics, Rectangle, Sprite, Texture } from "pixi.js";
 import { useState } from "react";
-
-interface Point {
-    x: number;
-    y: number;
-}
-
-interface ConnectingPoint {
-    id: string;
-    position: Point;
-    isSelected: boolean;
-    color: string;
-    size: number
-}
-
-interface Line {
-    startPos: Point;
-    endPos: Point;
-}
-
-interface CurvedLine {
-    startPos: Point;
-    controlPos: Point;
-    endPos: Point;
-}
+import { Point } from "./Point";
+import type { ConnectingPoint, CurvedLine, Line } from "./types";
 
 export function PointsAndLinesCanvas() {
     useExtend({ Container, Graphics, Sprite, Text });
@@ -34,10 +12,9 @@ export function PointsAndLinesCanvas() {
     const [location, setLocation] = useState({ x: 0, y: 0 });
     const [points, setPoints] = useState<ConnectingPoint[]>([]);
     const [straightLines, setStraightLines] = useState<Line[]>([]);
-    const [curvedLine, setCurvedLine] = useState<CurvedLine | null>(null);
+    const [curvedLines, setCurvedLines] = useState<CurvedLine[]>([]);
     const [isDrawingLine, setIsDrawingLine] = useState(false);
-    const [pointSize, setPointSize] = useState(8);
-
+    
     const handleCanvasClick = (e: FederatedPointerEvent) => {
         if (isDrawingLine) {
             setIsDrawingLine(false);
@@ -55,7 +32,7 @@ export function PointsAndLinesCanvas() {
                     x: e.nativeEvent.offsetX,
                     y: e.nativeEvent.offsetY,
                 },
-                size: pointSize,
+                size: 4,
                 color: '#ff4d4d'
             }
         ]);
@@ -64,13 +41,13 @@ export function PointsAndLinesCanvas() {
     function handleClearBtnClick() {
         setPoints([]);
         setStraightLines([])
-        setCurvedLine(null);
+        setCurvedLines([]);
     }
 
-    function handlePrintBtnClick() {
-        // if (!line) return;
-
-        // console.log(line.startPos);
+    function handleSelectAllBtnClick() {
+        setPoints(prev => [
+            ...prev.map(p => ({ ...p, isSelected: true }))
+        ]);
     }
 
     function handlePointClick(selectedPoint: ConnectingPoint) {
@@ -83,11 +60,56 @@ export function PointsAndLinesCanvas() {
     }
 
     function handleDrawCurve() {
-        // setCurvedLine({
-        //     startPos: { x: selectedPoints[0].x, y: selectedPoints[0].y },
-        //     controlPos: { x: selectedPoints[1].x, y: selectedPoints[1].y },
-        //     endPos: { x: selectedPoints[2].x, y: selectedPoints[2].y },
-        // });
+        const selectedPoints = points.filter(p => p.isSelected);
+
+        if (selectedPoints.length === 0)
+            return;
+
+        const newLines: CurvedLine[] = [];
+
+        for (let i = 0; i < selectedPoints.length; i += 2) {
+            const startPoint = selectedPoints[i];
+            let controlPoint = selectedPoints[i + 1];
+            let endPoint = selectedPoints[i + 2];
+
+            if (controlPoint && !endPoint) {
+                endPoint = controlPoint;
+
+                const controlPointX = startPoint.position.x + (endPoint.position.x - startPoint.position.x) / 2 + 20;
+                const controlPointY = startPoint.position.y + (endPoint.position.y - startPoint.position.y) / 2 + 20;
+
+                controlPoint = {
+                    ...startPoint,
+                    position: {
+                        x: controlPointX,
+                        y: controlPointY
+                    }
+                }
+            }
+
+            const cpX = 2 * controlPoint.position.x - (startPoint.position.x + endPoint.position.x) / 2;
+            const cpY = 2 * controlPoint.position.y - (startPoint.position.y + endPoint.position.y) / 2;
+
+            const newLine = {
+                startPos: { x: startPoint.position.x, y: startPoint.position.y },
+                controlPos: { x: cpX, y: cpY },
+                endPos: { x: endPoint.position.x, y: endPoint.position.y }
+            }
+
+            newLines.push(newLine);
+
+        };
+
+        if (newLines.length > 0) {
+            setPoints(prev => {
+                prev.forEach(p => p.isSelected = false);
+                return [...prev];
+            });
+            setCurvedLines(prev => [
+                ...prev,
+                ...newLines
+            ]);
+        }
     }
 
     function handleDrawStraight() {
@@ -99,9 +121,6 @@ export function PointsAndLinesCanvas() {
         const newLines: Line[] = [];
 
         for (let i = 0; i < selectedPoints.length; i++) {
-
-            console.log(selectedPoints[i + 1]);
-
             const point = selectedPoints[i];
             const nextPoint = selectedPoints[i + 1];
 
@@ -117,33 +136,39 @@ export function PointsAndLinesCanvas() {
 
         };
 
-        setStraightLines(newLines);
+        if (newLines.length > 0) {
+            setPoints(prev => {
+                prev.forEach(p => p.isSelected = false);
+                return [...prev];
+            });
+            setStraightLines(prev => [
+                ...prev,
+                ...newLines
+            ]);
+        }
     }
 
-
+    const isHandleDrawStraightBtnDisabled = points.filter(p => p.isSelected).length < 2;
+    const isHandleDrawCurveBtnDisabled = points.filter(p => p.isSelected).length < 2;
+    
     return (
         <div>
             <div className="flex justify-even gap-2 mb-2">
                 <p>Click location: {location.x}, {location.y}</p>
-                <input
-                    type="number"
-                    value={pointSize}
-                    onChange={(e) => setPointSize(parseInt(e.target.value))}
-                    className="border border-zinc-400 rounded-xs px-2 py-1" />
                 <button
-                    className="bg-blue-500 px-2 py-1 rounded-xs hover:bg-blue-400"
+                    className="bg-blue-400 px-2 py-1 rounded-xs hover:bg-blue-300 "
                     onClick={handleClearBtnClick}>Clear</button>
                 <button
-                    className="bg-blue-500 px-2 py-1 rounded-xs hover:bg-blue-400"
-                    onClick={handlePrintBtnClick}>Print</button>
+                    className="bg-blue-400 px-2 py-1 rounded-xs hover:bg-blue-300"
+                    onClick={handleSelectAllBtnClick}>Select all</button>
                 <button
-                    className="bg-blue-500 px-2 py-1 rounded-xs hover:bg-blue-400"
+                    className="bg-blue-400 px-2 py-1 rounded-xs hover:bg-blue-300 disabled:bg-zinc-200"
                     onClick={handleDrawStraight}
-                    disabled={false}>Draw straight</button>
+                    disabled={isHandleDrawStraightBtnDisabled}>Draw straight</button>
                 <button
-                    className="bg-blue-500 px-2 py-1 rounded-xs hover:bg-blue-400"
+                    className="bg-blue-400 px-2 py-1 rounded-xs hover:bg-blue-300 disabled:bg-zinc-200"
                     onClick={handleDrawCurve}
-                    disabled={true}>Draw curve</button>
+                    disabled={isHandleDrawCurveBtnDisabled}>Draw curve</button>
             </div>
             <Application
                 width={canvasWidth}
@@ -171,51 +196,30 @@ export function PointsAndLinesCanvas() {
                         eventMode='static'
                         onClick={() => handlePointClick(s)} />
                 ))}
-                {straightLines.map(l => (
+                {straightLines.map(sl => (
                     <pixiGraphics
                         key={crypto.randomUUID()}
                         draw={(g) => {
                             g.clear();
-                            g.moveTo(l.startPos.x, l.startPos.y);
-                            g.lineTo(l.endPos.x, l.endPos.y);
+                            g.moveTo(sl.startPos.x, sl.startPos.y);
+                            g.lineTo(sl.endPos.x, sl.endPos.y);
                             g.stroke({ color: '#a6a6a6', width: 2 });
                         }} />
                 ))}
-                {curvedLine &&
+                {curvedLines.map(cl => (
                     <pixiGraphics
+                        key={crypto.randomUUID()}
                         draw={(g) => {
-                            g.clear();
-                            g.moveTo(curvedLine.startPos.x, curvedLine.startPos.y);
-                            g.quadraticCurveTo(2 * curvedLine.controlPos.x - (curvedLine.startPos.x + curvedLine.endPos.x) / 2,
-                                2 * curvedLine.controlPos.y - (curvedLine.startPos.y + curvedLine.endPos.y) / 2,
-                                curvedLine.endPos.x,
-                                curvedLine.endPos.y, 3);
-                            g.stroke({ color: 'green', width: 2 });
-                        }} />}
+                            g.clear()
+                                .moveTo(cl.startPos.x, cl.startPos.y)
+                                .quadraticCurveTo(cl.controlPos.x,
+                                    cl.controlPos.y,
+                                    cl.endPos.x,
+                                    cl.endPos.y, 3)
+                                .stroke({ color: '#a6a6a6', width: 2 });
+                        }} />
+                ))}
             </Application>
         </div>
     );
-}
-
-interface PointProps {
-    x: number;
-    y: number;
-    size: number;
-    color: string;
-    eventMode?: EventMode;
-    onClick: (e: FederatedPointerEvent) => void;
-}
-
-function Point({ x, y, size, color, eventMode, onClick }: PointProps) {
-    return (<pixiGraphics
-        x={x}
-        y={y}
-        eventMode={eventMode}
-        onClick={onClick}
-        draw={(g) => {
-            g.clear();
-            g.setFillStyle({ color });
-            g.rect(0, 0, size, size);
-            g.fill();
-        }} />);
 }
