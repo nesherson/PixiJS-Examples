@@ -1,28 +1,39 @@
 import { Application, useExtend } from "@pixi/react";
-import { Container, FederatedPointerEvent, Graphics, Rectangle, Sprite, Texture } from "pixi.js";
-import { useState } from "react";
+import { Container, FederatedPointerEvent, Graphics, Sprite, Rectangle as PixiRectangle } from "pixi.js";
+import { useRef, useState } from "react";
 import { Point } from "./Point";
-import type { ConnectingPoint, CurvedLine, Line } from "./types";
+import type { ConnectingPoint, CurvedLine, Line, Point as PointType, Rectangle } from "./types";
 
 export function PointsAndLinesCanvas() {
     useExtend({ Container, Graphics, Sprite, Text });
+
     const canvasWidth = 1200;
     const canvasHeight = 720;
 
-    const [location, setLocation] = useState({ x: 0, y: 0 });
     const [points, setPoints] = useState<ConnectingPoint[]>([]);
     const [straightLines, setStraightLines] = useState<Line[]>([]);
     const [curvedLines, setCurvedLines] = useState<CurvedLine[]>([]);
-    const [isDrawingLine, setIsDrawingLine] = useState(false);
-    
-    const handleCanvasClick = (e: FederatedPointerEvent) => {
-        if (isDrawingLine) {
-            setIsDrawingLine(false);
+    const [startPos, setStartPos] = useState<PointType | null>(null);
+    const [selectionArea, setSelectionArea] = useState<Rectangle | null>(null);
+
+    const isSelectingRef = useRef(false);
+
+    const handleCanvasPointerDown = (e: FederatedPointerEvent) => {
+        if (e.button === 1) {
+            const { x, y } = e.getLocalPosition(e.currentTarget);
+
+            isSelectingRef.current = true;
+            setStartPos({ x, y });
+            setSelectionArea({
+                x: x,
+                y: y,
+                width: 1,
+                height: 1
+            });
 
             return;
         }
 
-        setLocation({ x: e.nativeEvent.offsetX, y: e.nativeEvent.offsetY });
         setPoints(prev => [
             ...prev,
             {
@@ -36,6 +47,48 @@ export function PointsAndLinesCanvas() {
                 color: '#ff4d4d'
             }
         ]);
+    }
+
+    function handleCanvasPointerUp() {
+        if (isSelectingRef.current && selectionArea) {
+            const pointsInArea = points.filter(p => {
+                if ((p.position.x >= selectionArea?.x && p.position.x <= selectionArea?.x + selectionArea?.width)
+                    && (p.position.y >= selectionArea?.y && p.position.y <= selectionArea?.y + selectionArea?.height)) {
+                    return true;
+                }
+                return false;
+            })
+
+            if (pointsInArea.length > 0) {
+                setPoints(prev => [
+                    ...prev.map(p => ({ ...p, isSelected: pointsInArea.some(p2 => p2.id === p.id) }))
+                ]);
+            }
+
+            isSelectingRef.current = false;
+            setSelectionArea(null);
+            setStartPos(null);
+        }
+    }
+
+
+    function handleCanvasPointerMove(e: FederatedPointerEvent) {
+        if (!isSelectingRef.current || !selectionArea || !startPos)
+            return;
+
+        const { x, y } = e.getLocalPosition(e.currentTarget);
+
+        const width = x - startPos.x;
+        const height = y - startPos.y;
+
+        const rect = {
+            x: width < 0 ? startPos.x + width : selectionArea.x,
+            y: height < 0 ? startPos.y + height : selectionArea.y,
+            width: Math.abs(width),
+            height: Math.abs(height)
+        };
+
+        setSelectionArea(rect);
     }
 
     function handleClearBtnClick() {
@@ -72,7 +125,10 @@ export function PointsAndLinesCanvas() {
             let controlPoint = selectedPoints[i + 1];
             let endPoint = selectedPoints[i + 2];
 
-            if (controlPoint && !endPoint) {
+            if (!controlPoint && !endPoint)
+                break;
+
+            if (!endPoint) {
                 endPoint = controlPoint;
 
                 const controlPointX = startPoint.position.x + (endPoint.position.x - startPoint.position.x) / 2 + 20;
@@ -91,20 +147,19 @@ export function PointsAndLinesCanvas() {
             const cpY = 2 * controlPoint.position.y - (startPoint.position.y + endPoint.position.y) / 2;
 
             const newLine = {
+                id: crypto.randomUUID(),
                 startPos: { x: startPoint.position.x, y: startPoint.position.y },
                 controlPos: { x: cpX, y: cpY },
                 endPos: { x: endPoint.position.x, y: endPoint.position.y }
             }
 
             newLines.push(newLine);
-
         };
 
         if (newLines.length > 0) {
-            setPoints(prev => {
-                prev.forEach(p => p.isSelected = false);
-                return [...prev];
-            });
+            setPoints(prev => [
+                ...prev.map(p => ({ ...p, isSelected: false }))
+            ]);
             setCurvedLines(prev => [
                 ...prev,
                 ...newLines
@@ -128,19 +183,18 @@ export function PointsAndLinesCanvas() {
                 break;
 
             const newLine = {
+                id: crypto.randomUUID(),
                 startPos: { x: point.position.x, y: point.position.y },
                 endPos: { x: nextPoint.position.x, y: nextPoint.position.y }
             }
 
             newLines.push(newLine);
-
         };
 
         if (newLines.length > 0) {
-            setPoints(prev => {
-                prev.forEach(p => p.isSelected = false);
-                return [...prev];
-            });
+            setPoints(prev => [
+                ...prev.map(p => ({ ...p, isSelected: false }))
+            ]);
             setStraightLines(prev => [
                 ...prev,
                 ...newLines
@@ -150,11 +204,10 @@ export function PointsAndLinesCanvas() {
 
     const isHandleDrawStraightBtnDisabled = points.filter(p => p.isSelected).length < 2;
     const isHandleDrawCurveBtnDisabled = points.filter(p => p.isSelected).length < 2;
-    
+
     return (
         <div>
             <div className="flex justify-even gap-2 mb-2">
-                <p>Click location: {location.x}, {location.y}</p>
                 <button
                     className="bg-blue-400 px-2 py-1 rounded-xs hover:bg-blue-300 "
                     onClick={handleClearBtnClick}>Clear</button>
@@ -177,28 +230,25 @@ export function PointsAndLinesCanvas() {
                 antialias>
                 <pixiContainer
                     eventMode='static'
-                    hitArea={new Rectangle(0, 0, canvasWidth, canvasHeight)}
-                    onPointerDown={handleCanvasClick}>
+                    hitArea={new PixiRectangle(0, 0, canvasWidth, canvasHeight)}
+                    onPointerDown={handleCanvasPointerDown}
+                    onPointerUp={handleCanvasPointerUp}
+                    onPointerMove={handleCanvasPointerMove}
+                >
                 </pixiContainer>
-                <pixiSprite
-                    width={canvasWidth}
-                    height={canvasHeight}
-                    eventMode='static'
-                    onClick={handleCanvasClick}
-                    texture={Texture.EMPTY} />
-                {points.map(s => (
+                {points.map(p => (
                     <Point
-                        key={crypto.randomUUID()}
-                        x={s.position.x}
-                        y={s.position.y}
-                        size={s.size}
-                        color={s.isSelected ? '#66ff66' : s.color}
+                        key={p.id}
+                        x={p.position.x}
+                        y={p.position.y}
+                        size={p.size}
+                        color={p.isSelected ? '#66ff66' : p.color}
                         eventMode='static'
-                        onClick={() => handlePointClick(s)} />
+                        onClick={() => handlePointClick(p)} />
                 ))}
                 {straightLines.map(sl => (
                     <pixiGraphics
-                        key={crypto.randomUUID()}
+                        key={sl.id}
                         draw={(g) => {
                             g.clear();
                             g.moveTo(sl.startPos.x, sl.startPos.y);
@@ -208,7 +258,7 @@ export function PointsAndLinesCanvas() {
                 ))}
                 {curvedLines.map(cl => (
                     <pixiGraphics
-                        key={crypto.randomUUID()}
+                        key={cl.id}
                         draw={(g) => {
                             g.clear()
                                 .moveTo(cl.startPos.x, cl.startPos.y)
@@ -219,7 +269,20 @@ export function PointsAndLinesCanvas() {
                                 .stroke({ color: '#a6a6a6', width: 2 });
                         }} />
                 ))}
+                {selectionArea &&
+                    <pixiGraphics
+                        draw={(g) => {
+                            g.clear()
+                                .rect(selectionArea.x, selectionArea.y, selectionArea.width, selectionArea.height)
+                                .stroke({ color: '#a6a6a6', width: 2 });
+                        }} />
+                }
             </Application>
+            <div className="mt-2">
+                <p>Click on the canvas to create points.</p>
+                <p>Use "Draw straight" or "Draw curve" to draw lines between points.</p>
+                <p>Hold MMB to use selection rectangle.</p>
+            </div>
         </div>
     );
 }
