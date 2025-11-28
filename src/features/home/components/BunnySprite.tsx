@@ -2,6 +2,7 @@ import {
     Assets,
     TextStyle,
     Texture,
+    type ColorSource,
 } from 'pixi.js';
 import {
     useEffect,
@@ -14,10 +15,11 @@ interface BunnySpriteProps {
     x: number;
     y: number;
     rotation?: number;
-    name: string;
+    name?: string;
+    tint?: ColorSource;
 }
 
-export function BunnySprite({ onClick, scale = 1.25, x, y, rotation = 0, name }: BunnySpriteProps) {
+export function BunnySprite({ onClick, scale = 1.25, x, y, rotation = 0, name, tint }: BunnySpriteProps) {
     const [texture, setTexture] = useState(Texture.EMPTY);
 
     useEffect(() => {
@@ -32,15 +34,16 @@ export function BunnySprite({ onClick, scale = 1.25, x, y, rotation = 0, name }:
 
     return (
         <pixiContainer>
-            <pixiText
-                anchor={0.5}
-                text={name}
-                style={new TextStyle({
-                    fill: '#ffffff',
-                    fontSize: 12
-                })}
-                x={x}
-                y={y - 30 * scale} />
+            {name &&
+                <pixiText
+                    anchor={0.5}
+                    text={name}
+                    style={new TextStyle({
+                        fill: '#ffffff',
+                        fontSize: 12
+                    })}
+                    x={x}
+                    y={y - 30 * scale} />}
             <pixiSprite
                 anchor={0.5}
                 eventMode={'static'}
@@ -49,7 +52,8 @@ export function BunnySprite({ onClick, scale = 1.25, x, y, rotation = 0, name }:
                 texture={texture}
                 x={x}
                 y={y}
-                rotation={rotation} />
+                rotation={rotation}
+                tint={tint} />
         </pixiContainer>
     );
 }
