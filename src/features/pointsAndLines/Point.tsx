@@ -5,7 +5,7 @@ export interface PointProps {
     size: number;
     color: string;
     eventMode?: EventMode;
-    onClick: (e: FederatedPointerEvent) => void;
+    onClick?: (e: FederatedPointerEvent) => void;
 }
 
 export function Point({ x, y, size, color, eventMode, onClick }: PointProps) {
