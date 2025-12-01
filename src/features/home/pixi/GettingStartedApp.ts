@@ -1,10 +1,13 @@
 import {
   Application,
   Assets,
+  Container,
   FederatedPointerEvent,
   Sprite,
   type Texture,
   type Ticker,
+  Text,
+  TextStyle,
 } from "pixi.js";
 
 export class GettingStartedApp {
@@ -14,10 +17,10 @@ export class GettingStartedApp {
   private bunnyFourAngle = 0;
   private bunnyFourRadius = 50;
   private bunnyFourRotationSpeed = 0.1;
-  private bunnyOne!: Sprite;
-  private bunnyTwo!: Sprite;
-  private bunnyThree!: Sprite;
-  private bunnyFour!: Sprite;
+  private bunnyOne!: Container;
+  private bunnyTwo!: Container;
+  private bunnyThree!: Container;
+  private bunnyFour!: Container;
 
   public app: Application;
 
@@ -43,22 +46,26 @@ export class GettingStartedApp {
     this.bunnyOne = this.createBunny(
       this.app.screen.width * 0.2,
       this.app.screen.height * 0.2,
-      texture
+      texture,
+      "Bunny 1"
     );
     this.bunnyTwo = this.createBunny(
       this.app.screen.width * 0.8,
       this.app.screen.height * 0.2,
-      texture
+      texture,
+      "Bunny 2"
     );
     this.bunnyThree = this.createBunny(
       this.app.screen.width * 0.2,
       this.app.screen.height * 0.8,
-      texture
+      texture,
+      "Bunny 3"
     );
     this.bunnyFour = this.createBunny(
       this.app.screen.width * 0.8,
       this.app.screen.height * 0.8,
-      texture
+      texture,
+      "Bunny 4"
     );
 
     this.bunnyOne.eventMode = "static";
@@ -100,8 +107,13 @@ export class GettingStartedApp {
 
     this.bunnyTwo.x +=
       this.bunnyTwoDirection * time.deltaTime * this.bunnyTwoMoveSpeed;
-    this.bunnyThree.rotation +=
-      this.bunnyThreeRotationSpeed * time.deltaTime;
+
+    const bunnyThreeSprite = this.bunnyThree.getChildByLabel(
+      "bunny-sprite"
+    ) as Sprite;
+
+    bunnyThreeSprite.rotation += this.bunnyThreeRotationSpeed * time.deltaTime;
+
     this.bunnyFour.x =
       this.app.screen.width * 0.8 +
       Math.cos(this.bunnyFourAngle) * this.bunnyFourRadius;
@@ -110,24 +122,34 @@ export class GettingStartedApp {
       Math.sin(this.bunnyFourAngle) * this.bunnyFourRadius;
   }
 
-  private createBunny(x: number, y: number, texture: Texture) {
+  private createBunny(x: number, y: number, texture: Texture, name: string) {
+    const bunnyContainer = new Container();
     const bunny = new Sprite(texture);
-    bunny.anchor.set(0.5);
-    bunny.x = x;
-    bunny.y = y;
+    const textStyle = new TextStyle({ fontSize: 14 });
+    const bunnyText = new Text({ text: name, style: textStyle });
 
-    return bunny;
+    bunny.label = "bunny-sprite";
+    bunny.anchor.set(0.5);
+    bunnyContainer.x = x;
+    bunnyContainer.y = y;
+    bunnyText.x -= bunny.width;
+    bunnyText.y -= bunny.height + 5;
+
+    bunnyContainer.addChild(bunny);
+    bunnyContainer.addChild(bunnyText);
+
+    return bunnyContainer;
   }
 
   private bunnyOneClick(e: FederatedPointerEvent) {
-    const sprite = e.currentTarget as Sprite;
+    const container = e.currentTarget as Container;
 
-    if (sprite.scale.x === 1 && sprite.scale.y === 1) {
-      sprite.scale.x = 1.5;
-      sprite.scale.y = 1.5;
+    if (container.scale.x === 1 && container.scale.y === 1) {
+      container.scale.x = 1.5;
+      container.scale.y = 1.5;
     } else {
-      sprite.scale.x = 1;
-      sprite.scale.y = 1;
+      container.scale.x = 1;
+      container.scale.y = 1;
     }
   }
 }
