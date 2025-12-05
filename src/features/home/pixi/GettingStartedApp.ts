@@ -1,5 +1,4 @@
 import {
-  Application,
   Assets,
   Container,
   FederatedPointerEvent,
@@ -8,9 +7,12 @@ import {
   type Ticker,
   Text,
   TextStyle,
+  Application,
 } from "pixi.js";
+import { type IPixiApp } from "../../../types/app";
 
-export class GettingStartedApp {
+export class GettingStartedApp implements IPixiApp {
+  public app: Application;
   private bunnyTwoMoveSpeed = 1;
   private bunnyTwoDirection = 1;
   private bunnyThreeRotationSpeed = 0.1;
@@ -22,10 +24,12 @@ export class GettingStartedApp {
   private bunnyThree!: Container;
   private bunnyFour!: Container;
 
-  public app: Application;
-
   constructor() {
     this.app = new Application();
+  }
+
+  get canvas() {
+    return this.app.canvas as HTMLCanvasElement;
   }
 
   async init() {
@@ -38,34 +42,39 @@ export class GettingStartedApp {
     this.app.ticker.add(this.update.bind(this));
   }
 
+  destroy() {
+    this.app.destroy(true, { children: true });
+    console.log("Pixi Destroyed");
+  }
+
   async createBunnies() {
     const texture: Texture = await Assets.load(
-      "https://pixijs.com/assets/bunny.png"
+      "https://pixijs.com/assets/bunny.png",
     );
 
     this.bunnyOne = this.createBunny(
       this.app.screen.width * 0.2,
       this.app.screen.height * 0.2,
       texture,
-      "Bunny 1"
+      "Bunny 1",
     );
     this.bunnyTwo = this.createBunny(
       this.app.screen.width * 0.8,
       this.app.screen.height * 0.2,
       texture,
-      "Bunny 2"
+      "Bunny 2",
     );
     this.bunnyThree = this.createBunny(
       this.app.screen.width * 0.2,
       this.app.screen.height * 0.8,
       texture,
-      "Bunny 3"
+      "Bunny 3",
     );
     this.bunnyFour = this.createBunny(
       this.app.screen.width * 0.8,
       this.app.screen.height * 0.8,
       texture,
-      "Bunny 4"
+      "Bunny 4",
     );
 
     this.bunnyOne.eventMode = "static";
@@ -89,12 +98,6 @@ export class GettingStartedApp {
     this.bunnyFourRotationSpeed = rotationSpeed;
   }
 
-  destroy() {
-    if (this.app.renderer) {
-      this.app.destroy({ removeView: true });
-    }
-  }
-
   private update(time: Ticker) {
     this.bunnyFourAngle =
       this.bunnyFourAngle + this.bunnyFourRotationSpeed * time.deltaTime;
@@ -109,7 +112,7 @@ export class GettingStartedApp {
       this.bunnyTwoDirection * time.deltaTime * this.bunnyTwoMoveSpeed;
 
     const bunnyThreeSprite = this.bunnyThree.getChildByLabel(
-      "bunny-sprite"
+      "bunny-sprite",
     ) as Sprite;
 
     bunnyThreeSprite.rotation += this.bunnyThreeRotationSpeed * time.deltaTime;
