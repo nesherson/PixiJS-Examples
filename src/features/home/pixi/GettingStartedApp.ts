@@ -1,18 +1,25 @@
 import {
+  Application,
   Assets,
   Container,
   FederatedPointerEvent,
   Sprite,
-  type Texture,
-  type Ticker,
   Text,
   TextStyle,
-  Application,
+  type Texture,
+  type Ticker,
 } from "pixi.js";
-import { PixiApplication, type IPixiApp } from "../../../types/app";
+import { type IPixiApplication } from "../../pixiCanvas/types";
 
-export class GettingStartedApp implements IPixiApp {
-  public app: PixiApplication;
+export interface GettingStartedAppUpdateProps {
+  bunnyTwoMoveSpeed: number;
+  bunnyThreeRotationSpeed: number;
+  bunnyFourRotationSpeed: number;
+}
+
+export class GettingStartedApp implements IPixiApplication<GettingStartedAppUpdateProps> {
+  public app: Application;
+  private container: HTMLDivElement;
   private bunnyTwoMoveSpeed = 1;
   private bunnyTwoDirection = 1;
   private bunnyThreeRotationSpeed = 0.1;
@@ -24,66 +31,39 @@ export class GettingStartedApp implements IPixiApp {
   private bunnyThree!: Container;
   private bunnyFour!: Container;
 
-  constructor() {
-    this.app = new PixiApplication();
-  }
-
-  get canvas() {
-    return this.app.canvas as HTMLCanvasElement;
-  }
-
-  get isInitializing() {
-    return this.app.isInitializing;
-  }
-
-  get isInitialized() {
-    return this.app.isInitialized;
+  constructor(container: HTMLDivElement, updateProps: GettingStartedAppUpdateProps) {
+    this.app = new Application();
+    this.container = container;
   }
 
   async init() {
-    await this.app.initialize({
+    await this.app.init({
       background: "#1099bb",
       width: 800,
       height: 600,
     });
+    this.container.appendChild(this.app.canvas);
     await this.createBunnies();
-    this.app.ticker.add(this.update.bind(this));
+    this.app.ticker.add(this.animate);
   }
 
   destroy() {
     this.app.destroy(true, { children: true });
-    console.log("Pixi Destroyed");
+  }
+
+  update(updateProps: GettingStartedAppUpdateProps): void {
+    this.bunnyTwoMoveSpeed = updateProps.bunnyTwoMoveSpeed;
+    this.bunnyThreeRotationSpeed = updateProps.bunnyThreeRotationSpeed;
+    this.bunnyFourRotationSpeed = updateProps.bunnyFourRotationSpeed;
   }
 
   async createBunnies() {
-    const texture: Texture = await Assets.load(
-      "https://pixijs.com/assets/bunny.png",
-    );
+    const texture: Texture = await Assets.load("https://pixijs.com/assets/bunny.png");
 
-    this.bunnyOne = this.createBunny(
-      this.app.screen.width * 0.2,
-      this.app.screen.height * 0.2,
-      texture,
-      "Bunny 1",
-    );
-    this.bunnyTwo = this.createBunny(
-      this.app.screen.width * 0.8,
-      this.app.screen.height * 0.2,
-      texture,
-      "Bunny 2",
-    );
-    this.bunnyThree = this.createBunny(
-      this.app.screen.width * 0.2,
-      this.app.screen.height * 0.8,
-      texture,
-      "Bunny 3",
-    );
-    this.bunnyFour = this.createBunny(
-      this.app.screen.width * 0.8,
-      this.app.screen.height * 0.8,
-      texture,
-      "Bunny 4",
-    );
+    this.bunnyOne = this.createBunny(this.app.screen.width * 0.2, this.app.screen.height * 0.2, texture, "Bunny 1");
+    this.bunnyTwo = this.createBunny(this.app.screen.width * 0.8, this.app.screen.height * 0.2, texture, "Bunny 2");
+    this.bunnyThree = this.createBunny(this.app.screen.width * 0.2, this.app.screen.height * 0.8, texture, "Bunny 3");
+    this.bunnyFour = this.createBunny(this.app.screen.width * 0.8, this.app.screen.height * 0.8, texture, "Bunny 4");
 
     this.bunnyOne.eventMode = "static";
     this.bunnyOne.on("click", this.bunnyOneClick);
@@ -94,21 +74,8 @@ export class GettingStartedApp implements IPixiApp {
     this.app.stage.addChild(this.bunnyFour);
   }
 
-  setBunnyTwoMoveSpeed(moveSpeed: number) {
-    this.bunnyTwoMoveSpeed = moveSpeed;
-  }
-
-  setBunnyThreeRotationSpeed(rotationSpeed: number) {
-    this.bunnyThreeRotationSpeed = rotationSpeed;
-  }
-
-  setBunnyFourRotationSpeed(rotationSpeed: number) {
-    this.bunnyFourRotationSpeed = rotationSpeed;
-  }
-
-  private update(time: Ticker) {
-    this.bunnyFourAngle =
-      this.bunnyFourAngle + this.bunnyFourRotationSpeed * time.deltaTime;
+  private animate = (time: Ticker) => {
+    this.bunnyFourAngle = this.bunnyFourAngle + this.bunnyFourRotationSpeed * time.deltaTime;
 
     if (this.bunnyTwo.x >= this.app.screen.width * 0.9) {
       this.bunnyTwoDirection = -1;
@@ -116,22 +83,15 @@ export class GettingStartedApp implements IPixiApp {
       this.bunnyTwoDirection = 1;
     }
 
-    this.bunnyTwo.x +=
-      this.bunnyTwoDirection * time.deltaTime * this.bunnyTwoMoveSpeed;
+    this.bunnyTwo.x += this.bunnyTwoDirection * time.deltaTime * this.bunnyTwoMoveSpeed;
 
-    const bunnyThreeSprite = this.bunnyThree.getChildByLabel(
-      "bunny-sprite",
-    ) as Sprite;
+    const bunnyThreeSprite = this.bunnyThree.getChildByLabel("bunny-sprite") as Sprite;
 
     bunnyThreeSprite.rotation += this.bunnyThreeRotationSpeed * time.deltaTime;
 
-    this.bunnyFour.x =
-      this.app.screen.width * 0.8 +
-      Math.cos(this.bunnyFourAngle) * this.bunnyFourRadius;
-    this.bunnyFour.y =
-      this.app.screen.height * 0.8 +
-      Math.sin(this.bunnyFourAngle) * this.bunnyFourRadius;
-  }
+    this.bunnyFour.x = this.app.screen.width * 0.8 + Math.cos(this.bunnyFourAngle) * this.bunnyFourRadius;
+    this.bunnyFour.y = this.app.screen.height * 0.8 + Math.sin(this.bunnyFourAngle) * this.bunnyFourRadius;
+  };
 
   private createBunny(x: number, y: number, texture: Texture, name: string) {
     const bunnyContainer = new Container();

@@ -6,17 +6,20 @@ import { PointNode } from "./PointNode";
 import { RectangleNode } from "./RectangleNode";
 import { StraightLineNode } from "./StraightLineNode";
 import { isInArea } from "./utils";
+import type { IPixiApplication } from "../../pixiCanvas/types";
 
-export class PointsAndLinesApp {
+export class PointsAndLinesApp implements IPixiApplication {
   public app: Application;
+  private container: HTMLDivElement;
 
   private selectedPoints: Set<PointNode> = new Set();
   private isSelecting = false;
   private selectionStartPoint!: Point | null;
   private selectionArea!: RectangleNode | null;
 
-  constructor() {
+  constructor(container: HTMLDivElement) {
     this.app = new Application();
+    this.container = container;
   }
 
   async init() {
@@ -27,6 +30,8 @@ export class PointsAndLinesApp {
       antialias: true,
     });
 
+    this.container.appendChild(this.app.canvas);
+
     this.app.stage.eventMode = "static";
     this.app.stage.hitArea = new Rectangle(0, 0, this.app.screen.width, this.app.screen.height);
     this.app.stage.on("pointerdown", this.stagePointerDown);
@@ -34,6 +39,10 @@ export class PointsAndLinesApp {
     this.app.stage.on("mousemove", this.stageMouseMove);
 
     this.addButtons();
+  }
+
+  destroy() {
+    this.app.destroy(true, { children: true });
   }
 
   private addButtons = () => {
