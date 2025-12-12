@@ -1,5 +1,13 @@
-import { Application, Assets, Container, FederatedPointerEvent, FederatedWheelEvent, Graphics, Sprite } from "pixi.js";
-import type { IPixiApplication } from "../../pixiCanvas";
+import {
+  Application,
+  Assets,
+  Container,
+  FederatedPointerEvent,
+  FederatedWheelEvent,
+  Graphics,
+  Sprite,
+} from "pixi.js";
+import type { IPixiApplication } from "@/features/pixiCanvas";
 
 export class CoordinatePlaneApp implements IPixiApplication {
   public app: Application;
@@ -40,7 +48,11 @@ export class CoordinatePlaneApp implements IPixiApplication {
     this.app.stage.on("pointerupoutside", this.stagePointerUpOutside);
     this.app.stage.on("wheel", this.stageWheel);
 
-    const centerPoint = new Graphics().clear().setFillStyle({ color: 0xff0000 }).circle(0, 0, 3).fill();
+    const centerPoint = new Graphics()
+      .clear()
+      .setFillStyle({ color: 0xff0000 })
+      .circle(0, 0, 3)
+      .fill();
     const spriteOne = new Sprite(texture);
     spriteOne.anchor = 0.5;
     spriteOne.x = 200;
@@ -69,7 +81,9 @@ export class CoordinatePlaneApp implements IPixiApplication {
     // console.log(`e.clientX -> ${e.clientX}, e.clientY -> ${e.clientY}, `);
     const test = this.world.toLocal({ x: e.clientX, y: e.clientY });
 
-    console.log(`this.world.toLocal.x -> ${test.x}, this.world.toLocal.y -> ${test.y}, `);
+    console.log(
+      `this.world.toLocal.x -> ${test.x}, this.world.toLocal.y -> ${test.y}, `,
+    );
     if (!this.isDragging) return;
 
     const currentPos = { x: e.global.x, y: e.global.y };

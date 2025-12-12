@@ -6,7 +6,7 @@ import { PointNode } from "./PointNode";
 import { RectangleNode } from "./RectangleNode";
 import { StraightLineNode } from "./StraightLineNode";
 import { isInArea } from "./utils";
-import type { IPixiApplication } from "../../pixiCanvas";
+import type { IPixiApplication } from "@/features/pixiCanvas";
 
 export class PointsAndLinesApp implements IPixiApplication {
   public app: Application;
@@ -33,7 +33,12 @@ export class PointsAndLinesApp implements IPixiApplication {
     this.container.appendChild(this.app.canvas);
 
     this.app.stage.eventMode = "static";
-    this.app.stage.hitArea = new Rectangle(0, 0, this.app.screen.width, this.app.screen.height);
+    this.app.stage.hitArea = new Rectangle(
+      0,
+      0,
+      this.app.screen.width,
+      this.app.screen.height,
+    );
     this.app.stage.on("pointerdown", this.stagePointerDown);
     this.app.stage.on("pointerup", this.stagePointerUp);
     this.app.stage.on("mousemove", this.stageMouseMove);
@@ -46,9 +51,30 @@ export class PointsAndLinesApp implements IPixiApplication {
   }
 
   private addButtons = () => {
-    const drawStraightLinesBtn = new ButtonNode(20, 10, 120, 40, 5, "Draw straight");
-    const drawCurvedLinesBtn = new ButtonNode(160, 10, 120, 40, 5, "Draw Curved");
-    const selectAllPointsBtn = new ButtonNode(300, 10, 120, 40, 5, "Select all");
+    const drawStraightLinesBtn = new ButtonNode(
+      20,
+      10,
+      120,
+      40,
+      5,
+      "Draw straight",
+    );
+    const drawCurvedLinesBtn = new ButtonNode(
+      160,
+      10,
+      120,
+      40,
+      5,
+      "Draw Curved",
+    );
+    const selectAllPointsBtn = new ButtonNode(
+      300,
+      10,
+      120,
+      40,
+      5,
+      "Select all",
+    );
     const clearBtn = new ButtonNode(440, 10, 120, 40, 5, "Clear");
 
     drawStraightLinesBtn.on("click", this.drawStraightLinesClick);
@@ -56,7 +82,12 @@ export class PointsAndLinesApp implements IPixiApplication {
     selectAllPointsBtn.on("click", this.selectAllPointsClick);
     clearBtn.on("click", this.clearClick);
 
-    this.app.stage.addChild(drawStraightLinesBtn, drawCurvedLinesBtn, selectAllPointsBtn, clearBtn);
+    this.app.stage.addChild(
+      drawStraightLinesBtn,
+      drawCurvedLinesBtn,
+      selectAllPointsBtn,
+      clearBtn,
+    );
   };
 
   private stagePointerDown = (e: FederatedPointerEvent) => {
@@ -85,7 +116,8 @@ export class PointsAndLinesApp implements IPixiApplication {
   };
 
   private stageMouseMove = (e: FederatedPointerEvent) => {
-    if (!this.isSelecting || !this.selectionArea || !this.selectionStartPoint) return;
+    if (!this.isSelecting || !this.selectionArea || !this.selectionStartPoint)
+      return;
 
     const { x, y } = e.getLocalPosition(e.currentTarget);
 
@@ -96,8 +128,10 @@ export class PointsAndLinesApp implements IPixiApplication {
     const width = x - this.selectionStartPoint.x;
     const height = y - this.selectionStartPoint.y;
 
-    this.selectionArea.x = width < 0 ? this.selectionStartPoint.x + width : this.selectionArea.x;
-    this.selectionArea.y = height < 0 ? this.selectionStartPoint.y + height : this.selectionArea.y;
+    this.selectionArea.x =
+      width < 0 ? this.selectionStartPoint.x + width : this.selectionArea.x;
+    this.selectionArea.y =
+      height < 0 ? this.selectionStartPoint.y + height : this.selectionArea.y;
     this.selectionArea.rectWidth = Math.abs(width);
     this.selectionArea.rectHeight = Math.abs(height);
     this.selectionArea.draw();
@@ -106,8 +140,12 @@ export class PointsAndLinesApp implements IPixiApplication {
   private stagePointerUp = () => {
     if (!this.isSelecting || !this.selectionArea) return;
 
-    const points = this.app.stage.children.filter((c) => c.label === "point-node");
-    const pointsInArea = points.filter((p) => isInArea(this.selectionArea!, p.x, p.y)) as PointNode[];
+    const points = this.app.stage.children.filter(
+      (c) => c.label === "point-node",
+    );
+    const pointsInArea = points.filter((p) =>
+      isInArea(this.selectionArea!, p.x, p.y),
+    ) as PointNode[];
 
     pointsInArea.forEach((p) => {
       p.toggleSelection();
@@ -143,7 +181,9 @@ export class PointsAndLinesApp implements IPixiApplication {
   };
 
   private selectAllPointsClick = () => {
-    const pointsToSelect = this.app.stage.getChildrenByLabel("point-node") as PointNode[];
+    const pointsToSelect = this.app.stage.getChildrenByLabel(
+      "point-node",
+    ) as PointNode[];
 
     if (pointsToSelect.length === 0) return;
 
@@ -186,14 +226,20 @@ export class PointsAndLinesApp implements IPixiApplication {
       if (!endPoint) {
         endPoint = controlPoint;
 
-        const controlPointX = startPoint.x + (endPoint.x - startPoint.x) / 2 + 20;
-        const controlPointY = startPoint.y + (endPoint.y - startPoint.y) / 2 + 20;
+        const controlPointX =
+          startPoint.x + (endPoint.x - startPoint.x) / 2 + 20;
+        const controlPointY =
+          startPoint.y + (endPoint.y - startPoint.y) / 2 + 20;
 
         controlPoint = new PointNode(controlPointX, controlPointY);
       }
 
-      const cpX = 2 * controlPoint.position.x - (startPoint.position.x + endPoint.position.x) / 2;
-      const cpY = 2 * controlPoint.position.y - (startPoint.position.y + endPoint.position.y) / 2;
+      const cpX =
+        2 * controlPoint.position.x -
+        (startPoint.position.x + endPoint.position.x) / 2;
+      const cpY =
+        2 * controlPoint.position.y -
+        (startPoint.position.y + endPoint.position.y) / 2;
       const newLine = new CurvedLineNode(
         new Point(startPoint.x, startPoint.y),
         new Point(cpX, cpY),
@@ -207,14 +253,29 @@ export class PointsAndLinesApp implements IPixiApplication {
   };
 
   private clearClick = () => {
-    const labelsToCheck = ["point-node", "straight-line-node", "curved-line-node"];
-    const nodesToRemove = this.app.stage.children.filter((c) => labelsToCheck.includes(c.label));
+    const labelsToCheck = [
+      "point-node",
+      "straight-line-node",
+      "curved-line-node",
+    ];
+    const nodesToRemove = this.app.stage.children.filter((c) =>
+      labelsToCheck.includes(c.label),
+    );
 
     nodesToRemove.forEach((n) => this.app.stage.removeChild(n));
     this.selectedPoints.clear();
   };
 
   private isInRestrictedArea = (x: number, y: number) => {
-    return isInArea(new RectangleNode(0, 0, this.app.screen.width, this.app.screen.height * 0.07), x, y);
+    return isInArea(
+      new RectangleNode(
+        0,
+        0,
+        this.app.screen.width,
+        this.app.screen.height * 0.07,
+      ),
+      x,
+      y,
+    );
   };
 }

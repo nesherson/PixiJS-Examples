@@ -1,6 +1,9 @@
 import { useState, type ChangeEvent } from "react";
-import { PixiCanvas } from "../pixiCanvas";
-import { GettingStartedApp, type GettingStartedAppUpdateProps } from "./pixi/GettingStartedApp";
+import { PixiCanvas } from "@/features/pixiCanvas";
+import {
+  GettingStartedApp,
+  type GettingStartedAppUpdateProps,
+} from "./pixi/GettingStartedApp";
 
 export function GettingStarted() {
   const [bunnyTwoMoveSpeed, setBunnyTwoMoveSpeed] = useState(1);
@@ -17,11 +20,15 @@ export function GettingStarted() {
     setBunnyTwoMoveSpeed(parseInt(e.target.value));
   };
 
-  const handleBunnyThreeRotationSpeedChange = (e: ChangeEvent<HTMLInputElement>) => {
+  const handleBunnyThreeRotationSpeedChange = (
+    e: ChangeEvent<HTMLInputElement>,
+  ) => {
     setBunnyThreeRotationSpeed(parseInt(e.target.value) / 100);
   };
 
-  const handleBunnyFourRotationSpeedChange = (e: ChangeEvent<HTMLInputElement>) => {
+  const handleBunnyFourRotationSpeedChange = (
+    e: ChangeEvent<HTMLInputElement>,
+  ) => {
     setBunnyFourRotationSpeed(parseInt(e.target.value) / 100);
   };
 
@@ -66,7 +73,10 @@ export function GettingStarted() {
           />
         </div>
       </div>
-      <PixiCanvas applicationClass={GettingStartedApp} updateProps={updateProps} />
+      <PixiCanvas
+        applicationClass={GettingStartedApp}
+        updateProps={updateProps}
+      />
     </>
   );
 }

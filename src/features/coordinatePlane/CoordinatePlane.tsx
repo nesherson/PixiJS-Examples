@@ -1,4 +1,4 @@
-import { PixiCanvas } from "../pixiCanvas";
+import { PixiCanvas } from "@/features/pixiCanvas";
 import { CoordinatePlaneApp } from "./pixi/CoordinatePlaneApp";
 
 export function CoordinatePlane() {
