@@ -1,5 +1,5 @@
-import { useEffect, useRef } from "react";
-import type { IPixiApplication, PixiApplicationConstructor } from "./types";
+import { useEffect, useRef } from 'react';
+import type { IPixiApplication, PixiApplicationConstructor } from './types';
 
 interface BaseProps {
   className?: string;
@@ -22,7 +22,9 @@ export function PixiCanvas<T = undefined>({
     if (!containerRef.current) return;
 
     if (!isInitializingRef.current) {
-      const instance = new Application(containerRef.current) as IPixiApplication<T>;
+      const instance = new Application(
+        containerRef.current,
+      ) as IPixiApplication<T>;
       appRef.current = instance;
 
       const init = async () => {
@@ -30,7 +32,7 @@ export function PixiCanvas<T = undefined>({
           isInitializingRef.current = true;
           await instance.init();
         } catch (e) {
-          console.error("Pixi initialization failed", e);
+          console.error('Pixi initialization failed', e);
         } finally {
           isInitializingRef.current = false;
         }
@@ -53,5 +55,11 @@ export function PixiCanvas<T = undefined>({
     }
   }, [updateProps]);
 
-  return <div ref={containerRef} className={className} style={{ width: "100%", height: "100%" }} />;
+  return (
+    <div
+      ref={containerRef}
+      className={className}
+      style={{ width: '100%', height: '100%' }}
+    />
+  );
 }

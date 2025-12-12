@@ -1,10 +1,10 @@
-import { createBrowserRouter } from "react-router";
-import { RouterProvider } from "react-router/dom";
+import { createBrowserRouter } from 'react-router';
+import { RouterProvider } from 'react-router/dom';
 
-import { paths } from "@/config/paths";
-import Home from "./routes/app/home";
-import AppRoot from "./routes/app/root";
-import PointsAndLines from "./routes/app/points-and-lines";
+import { paths } from '@/config/paths';
+import Home from './routes/app/home';
+import AppRoot from './routes/app/root';
+import PointsAndLines from './routes/app/points-and-lines';
 
 const createAppRouter = () =>
   createBrowserRouter([

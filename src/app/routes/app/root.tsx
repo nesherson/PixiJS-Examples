@@ -1,6 +1,6 @@
-import { Outlet } from "react-router";
+import { Outlet } from 'react-router';
 
-import MainLayout from "@/layouts/MainLayout";
+import MainLayout from '@/layouts/MainLayout';
 
 const AppRoot = () => {
   return (

@@ -1,12 +1,11 @@
-import { Container, Graphics, Text, TextStyle } from "pixi.js";
-
+import { Container, Graphics, Text, TextStyle } from 'pixi.js';
 
 export class ButtonNode extends Container {
   public isSelected: boolean = false;
   private radius: number = 3;
   private rectangleWidth: number = 0;
   private rectangleHeight: number = 0;
-  private text: string = "";
+  private text: string = '';
 
   constructor(
     x: number,
@@ -14,7 +13,7 @@ export class ButtonNode extends Container {
     width: number,
     height: number,
     radius: number = 5,
-    text: string
+    text: string,
   ) {
     super();
     this.x = x;
@@ -23,8 +22,8 @@ export class ButtonNode extends Container {
     this.rectangleHeight = this.height = height;
     this.radius = radius;
     this.text = text;
-    this.eventMode = "static";
-    this.cursor = "pointer";
+    this.eventMode = 'static';
+    this.cursor = 'pointer';
 
     this.draw();
   }
@@ -32,7 +31,7 @@ export class ButtonNode extends Container {
   public draw() {
     const rectangle = new Graphics()
       .roundRect(0, 0, this.rectangleWidth, this.rectangleHeight, this.radius)
-      .fill("#6da2f7");
+      .fill('#6da2f7');
     const text = new Text({
       text: this.text,
       style: new TextStyle({ fontSize: 14 }),

@@ -1,1 +1,1 @@
-export { GettingStarted } from "./GettingStarted";
+export { GettingStarted } from './GettingStarted';

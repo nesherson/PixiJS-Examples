@@ -8,9 +8,9 @@ import {
   TextStyle,
   type Texture,
   type Ticker,
-} from "pixi.js";
+} from 'pixi.js';
 
-import { type IPixiApplication } from "@/features/pixiCanvas";
+import { type IPixiApplication } from '@/features/pixiCanvas';
 
 export interface GettingStartedAppUpdateProps {
   bunnyTwoMoveSpeed: number;
@@ -39,7 +39,7 @@ export class GettingStartedApp implements IPixiApplication<GettingStartedAppUpda
 
   async init() {
     await this.app.init({
-      background: "#1099bb",
+      background: '#1099bb',
       width: 800,
       height: 600,
     });
@@ -60,36 +60,36 @@ export class GettingStartedApp implements IPixiApplication<GettingStartedAppUpda
 
   async createBunnies() {
     const texture: Texture = await Assets.load(
-      "https://pixijs.com/assets/bunny.png",
+      'https://pixijs.com/assets/bunny.png',
     );
 
     this.bunnyOne = this.createBunny(
       this.app.screen.width * 0.2,
       this.app.screen.height * 0.2,
       texture,
-      "Bunny 1",
+      'Bunny 1',
     );
     this.bunnyTwo = this.createBunny(
       this.app.screen.width * 0.8,
       this.app.screen.height * 0.2,
       texture,
-      "Bunny 2",
+      'Bunny 2',
     );
     this.bunnyThree = this.createBunny(
       this.app.screen.width * 0.2,
       this.app.screen.height * 0.8,
       texture,
-      "Bunny 3",
+      'Bunny 3',
     );
     this.bunnyFour = this.createBunny(
       this.app.screen.width * 0.8,
       this.app.screen.height * 0.8,
       texture,
-      "Bunny 4",
+      'Bunny 4',
     );
 
-    this.bunnyOne.eventMode = "static";
-    this.bunnyOne.on("click", this.bunnyOneClick);
+    this.bunnyOne.eventMode = 'static';
+    this.bunnyOne.on('click', this.bunnyOneClick);
 
     this.app.stage.addChild(this.bunnyOne);
     this.app.stage.addChild(this.bunnyTwo);
@@ -111,7 +111,7 @@ export class GettingStartedApp implements IPixiApplication<GettingStartedAppUpda
       this.bunnyTwoDirection * time.deltaTime * this.bunnyTwoMoveSpeed;
 
     const bunnyThreeSprite = this.bunnyThree.getChildByLabel(
-      "bunny-sprite",
+      'bunny-sprite',
     ) as Sprite;
 
     bunnyThreeSprite.rotation += this.bunnyThreeRotationSpeed * time.deltaTime;
@@ -130,7 +130,7 @@ export class GettingStartedApp implements IPixiApplication<GettingStartedAppUpda
     const textStyle = new TextStyle({ fontSize: 14 });
     const bunnyText = new Text({ text: name, style: textStyle });
 
-    bunny.label = "bunny-sprite";
+    bunny.label = 'bunny-sprite';
     bunny.anchor.set(0.5);
     bunnyContainer.x = x;
     bunnyContainer.y = y;

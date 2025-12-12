@@ -1,9 +1,9 @@
-import { useState, type ChangeEvent } from "react";
-import { PixiCanvas } from "@/features/pixiCanvas";
+import { useState, type ChangeEvent } from 'react';
+import { PixiCanvas } from '@/features/pixiCanvas';
 import {
   GettingStartedApp,
   type GettingStartedAppUpdateProps,
-} from "./pixi/GettingStartedApp";
+} from './pixi/GettingStartedApp';
 
 export function GettingStarted() {
   const [bunnyTwoMoveSpeed, setBunnyTwoMoveSpeed] = useState(1);

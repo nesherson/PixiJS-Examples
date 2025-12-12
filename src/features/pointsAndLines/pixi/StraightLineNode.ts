@@ -1,4 +1,4 @@
-import { Graphics, Point } from "pixi.js";
+import { Graphics, Point } from 'pixi.js';
 
 export class StraightLineNode extends Graphics {
   private startPoint: Point;
@@ -9,7 +9,7 @@ export class StraightLineNode extends Graphics {
 
     this.startPoint = startPoint;
     this.endPoint = endPoint;
-    this.label = "straight-line-node";
+    this.label = 'straight-line-node';
 
     this.draw();
   }
@@ -17,6 +17,8 @@ export class StraightLineNode extends Graphics {
   private draw() {
     this.clear();
 
-    this.moveTo(this.startPoint.x, this.startPoint.y).lineTo(this.endPoint.x, this.endPoint.y).stroke("#000000");
+    this.moveTo(this.startPoint.x, this.startPoint.y)
+      .lineTo(this.endPoint.x, this.endPoint.y)
+      .stroke('#000000');
   }
 }

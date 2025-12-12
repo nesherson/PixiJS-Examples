@@ -1,4 +1,4 @@
-import { PointsAndLines } from "@/features/pointsAndLines";
+import { PointsAndLines } from '@/features/pointsAndLines';
 
 export default function PointsAndLinesRoute() {
   return (

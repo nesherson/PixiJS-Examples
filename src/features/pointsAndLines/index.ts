@@ -1,1 +1,1 @@
-export { PointsAndLines } from "./PointsAndLines";
+export { PointsAndLines } from './PointsAndLines';

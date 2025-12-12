@@ -1,4 +1,4 @@
-import { Graphics } from "pixi.js";
+import { Graphics } from 'pixi.js';
 
 export class PointNode extends Graphics {
   public isSelected: boolean = false;
@@ -8,8 +8,8 @@ export class PointNode extends Graphics {
     super();
     this.x = x;
     this.y = y;
-    this.eventMode = "static";
-    this.label = "point-node";
+    this.eventMode = 'static';
+    this.label = 'point-node';
 
     this.draw();
   }
@@ -17,7 +17,7 @@ export class PointNode extends Graphics {
   public draw() {
     this.clear();
 
-    const color = this.isSelected ? "#00ff00" : "#ff4d4d";
+    const color = this.isSelected ? '#00ff00' : '#ff4d4d';
 
     this.circle(0, 0, this.radius);
     this.fill(color);

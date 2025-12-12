@@ -1,4 +1,4 @@
-import { Graphics, Point } from "pixi.js";
+import { Graphics, Point } from 'pixi.js';
 
 export class CurvedLineNode extends Graphics {
   private startPoint: Point;
@@ -11,7 +11,7 @@ export class CurvedLineNode extends Graphics {
     this.startPoint = startPoint;
     this.controlPoint = controlPoint;
     this.endPoint = endPoint;
-    this.label = "curved-line-node";
+    this.label = 'curved-line-node';
 
     this.draw();
   }
@@ -20,7 +20,12 @@ export class CurvedLineNode extends Graphics {
     this.clear();
 
     this.moveTo(this.startPoint.x, this.startPoint.y)
-      .quadraticCurveTo(this.controlPoint.x, this.controlPoint.y, this.endPoint.x, this.endPoint.y)
-      .stroke("#000000");
+      .quadraticCurveTo(
+        this.controlPoint.x,
+        this.controlPoint.y,
+        this.endPoint.x,
+        this.endPoint.y,
+      )
+      .stroke('#000000');
   }
 }

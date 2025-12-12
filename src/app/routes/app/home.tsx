@@ -1,4 +1,4 @@
-import { GettingStarted } from "@/features/home";
+import { GettingStarted } from '@/features/home';
 
 export default function HomeRoute() {
   return (
