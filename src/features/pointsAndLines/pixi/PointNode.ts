@@ -25,8 +25,6 @@ export class PointNode extends Graphics {
   }
 
   public toggleSelection() {
-    if (!this.canBeSelected) return;
-
     this.isSelected = !this.isSelected;
     this.draw();
   }
