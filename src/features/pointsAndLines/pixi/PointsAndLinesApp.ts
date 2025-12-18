@@ -12,6 +12,7 @@ export interface PointsAndLinesAppProps {
   drawStraightLines?: () => void;
   drawCurvedLines?: () => void;
   clearAll?: () => void;
+  drawRandomPoints?: () => void;
 }
 
 export class PointsAndLinesApp implements IPixiApplication<PointsAndLinesAppProps> {
@@ -31,6 +32,7 @@ export class PointsAndLinesApp implements IPixiApplication<PointsAndLinesAppProp
       updateProps.drawStraightLines = this.drawStraightLines;
       updateProps.drawCurvedLines = this.drawCurvedLines;
       updateProps.clearAll = this.clearAll;
+      updateProps.drawRandomPoints = this.drawRandomPoints;
     }
   }
 
@@ -234,6 +236,19 @@ export class PointsAndLinesApp implements IPixiApplication<PointsAndLinesAppProp
 
     nodesToRemove.forEach((n) => this.app.stage.removeChild(n));
     this.selectedPoints.clear();
+  };
+
+  private drawRandomPoints = () => {
+    console.log('Drawing random points');
+    const count = Math.floor(Math.random() * 10) + 1;
+
+    for (let i = 0; i < count; i++) {
+      const x = Math.floor(Math.random() * this.app.screen.width);
+      const y = Math.floor(Math.random() * this.app.screen.height);
+
+      const point = new PointNode(x, y);
+      this.app.stage.addChild(point);
+    }
   };
 
   private isInRestrictedArea = (x: number, y: number) => {

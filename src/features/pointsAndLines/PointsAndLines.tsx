@@ -34,6 +34,12 @@ export function PointsAndLines() {
     }
   };
 
+  const handleDrawRandomPoints = () => {
+    if (updateProps.drawRandomPoints) {
+      updateProps.drawRandomPoints();
+    }
+  };
+
   const handleClearAll = () => {
     if (updateProps.clearAll) {
       updateProps.clearAll();
@@ -54,6 +60,12 @@ export function PointsAndLines() {
           onClick={handleDrawCurvedLines}
         >
           Draw curved
+        </button>
+        <button
+          className="px-2.5 py-2 bg-blue-400 rounded-sm"
+          onClick={handleDrawRandomPoints}
+        >
+          Random points
         </button>
         <button
           className="px-2.5 py-2 bg-blue-400 rounded-sm"
