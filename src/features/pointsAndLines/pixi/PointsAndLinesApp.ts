@@ -21,16 +21,22 @@ export class PointsAndLinesApp implements IPixiApplication<PointsAndLinesAppProp
 
   private selectedPoints: Set<PointNode> = new Set();
   private isSelecting = false;
-  private selectionStartPoint!: Point | null;
-  private selectionArea!: RectangleNode | null;
+  private selectionStartPoint: Point | null = null;
+  private selectionArea: RectangleNode | null = null;
 
   constructor(container: HTMLDivElement, updateProps?: PointsAndLinesAppProps) {
     this.app = new Application();
     this.container = container;
     if (updateProps) {
       updateProps.selectAll = this.selectAllPoints;
-      updateProps.drawStraightLines = this.drawStraightLines;
-      updateProps.drawCurvedLines = this.drawCurvedLines;
+      updateProps.drawStraightLines = () => {
+        this.drawStraightLines();
+        this.deselectSelectedPoints(true);
+      };
+      updateProps.drawCurvedLines = () => {
+        this.drawCurvedLines();
+        this.deselectSelectedPoints(true);
+      };
       updateProps.clearAll = this.clearAll;
       updateProps.drawRandomPoints = this.drawRandomPoints;
     }
@@ -125,9 +131,11 @@ export class PointsAndLinesApp implements IPixiApplication<PointsAndLinesAppProp
     }
   };
 
-  private deselectSelectedPoints = () => {
+  private deselectSelectedPoints = (disableSelection = false) => {
     this.selectedPoints.forEach((sp) => {
       sp.toggleSelection();
+
+      if (disableSelection) sp.disableSelection();
     });
 
     this.selectedPoints.clear();
@@ -151,15 +159,13 @@ export class PointsAndLinesApp implements IPixiApplication<PointsAndLinesAppProp
     for (let i = 0; i < selectedPoints.length; i++) {
       if (!selectedPoints[i + 1]) break;
 
-      const newLine = new StraightLineNode(
-        new Point(selectedPoints[i].x, selectedPoints[i].y),
-        new Point(selectedPoints[i + 1].x, selectedPoints[i + 1].y),
-      );
+      const startPoint = selectedPoints[i];
+      const endPoint = selectedPoints[i + 1];
+
+      const newLine = new StraightLineNode(startPoint, endPoint);
 
       this.app.stage.addChild(newLine);
     }
-
-    this.deselectSelectedPoints();
   };
 
   private drawCurvedLines = () => {
@@ -206,7 +212,6 @@ export class PointsAndLinesApp implements IPixiApplication<PointsAndLinesAppProp
   };
 
   private drawRandomPoints = () => {
-    console.log('Drawing random points');
     const count = Math.floor(Math.random() * 10) + 1;
 
     for (let i = 0; i < count; i++) {

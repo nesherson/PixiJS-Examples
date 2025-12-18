@@ -2,6 +2,7 @@ import { Graphics } from 'pixi.js';
 
 export class PointNode extends Graphics {
   public isSelected: boolean = false;
+  public canBeSelected: boolean = true;
   private radius: number = 3;
 
   constructor(x: number, y: number) {
@@ -24,7 +25,13 @@ export class PointNode extends Graphics {
   }
 
   public toggleSelection() {
+    if (!this.canBeSelected) return;
+
     this.isSelected = !this.isSelected;
     this.draw();
+  }
+
+  public disableSelection() {
+    this.canBeSelected = false;
   }
 }
