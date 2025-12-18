@@ -24,6 +24,7 @@ export function PixiCanvas<T = undefined>({
     if (!isInitializingRef.current) {
       const instance = new Application(
         containerRef.current,
+        updateProps,
       ) as IPixiApplication<T>;
       appRef.current = instance;
 
@@ -47,7 +48,7 @@ export function PixiCanvas<T = undefined>({
         appRef.current = null;
       }
     };
-  }, [Application]);
+  }, [Application, updateProps]);
 
   useEffect(() => {
     if (appRef.current && appRef.current.update && updateProps) {
