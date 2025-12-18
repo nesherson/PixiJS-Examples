@@ -1,14 +1,20 @@
 import { Application, FederatedPointerEvent, Point, Rectangle } from 'pixi.js';
 
-import { ButtonNode } from './ButtonNode';
+import type { IPixiApplication } from '@/features/pixiCanvas';
 import { CurvedLineNode } from './CurvedLineNode';
 import { PointNode } from './PointNode';
 import { RectangleNode } from './RectangleNode';
 import { StraightLineNode } from './StraightLineNode';
 import { isInArea } from './utils';
-import type { IPixiApplication } from '@/features/pixiCanvas';
 
-export class PointsAndLinesApp implements IPixiApplication {
+export interface PointsAndLinesAppProps {
+  selectAll?: () => void;
+  drawStraightLines?: () => void;
+  drawCurvedLines?: () => void;
+  clearAll?: () => void;
+}
+
+export class PointsAndLinesApp implements IPixiApplication<PointsAndLinesAppProps> {
   public app: Application;
   private container: HTMLDivElement;
 
@@ -17,9 +23,15 @@ export class PointsAndLinesApp implements IPixiApplication {
   private selectionStartPoint!: Point | null;
   private selectionArea!: RectangleNode | null;
 
-  constructor(container: HTMLDivElement) {
+  constructor(container: HTMLDivElement, updateProps?: PointsAndLinesAppProps) {
     this.app = new Application();
     this.container = container;
+    if (updateProps) {
+      updateProps.selectAll = this.selectAllPoints;
+      updateProps.drawStraightLines = this.drawStraightLines;
+      updateProps.drawCurvedLines = this.drawCurvedLines;
+      updateProps.clearAll = this.clearAll;
+    }
   }
 
   async init() {
@@ -42,53 +54,11 @@ export class PointsAndLinesApp implements IPixiApplication {
     this.app.stage.on('pointerdown', this.stagePointerDown);
     this.app.stage.on('pointerup', this.stagePointerUp);
     this.app.stage.on('mousemove', this.stageMouseMove);
-
-    this.addButtons();
   }
 
   destroy() {
     this.app.destroy(true, { children: true });
   }
-
-  private addButtons = () => {
-    const drawStraightLinesBtn = new ButtonNode(
-      20,
-      10,
-      120,
-      40,
-      5,
-      'Draw straight',
-    );
-    const drawCurvedLinesBtn = new ButtonNode(
-      160,
-      10,
-      120,
-      40,
-      5,
-      'Draw Curved',
-    );
-    const selectAllPointsBtn = new ButtonNode(
-      300,
-      10,
-      120,
-      40,
-      5,
-      'Select all',
-    );
-    const clearBtn = new ButtonNode(440, 10, 120, 40, 5, 'Clear');
-
-    drawStraightLinesBtn.on('click', this.drawStraightLinesClick);
-    drawCurvedLinesBtn.on('click', this.drawCurvedLinesClick);
-    selectAllPointsBtn.on('click', this.selectAllPointsClick);
-    clearBtn.on('click', this.clearClick);
-
-    this.app.stage.addChild(
-      drawStraightLinesBtn,
-      drawCurvedLinesBtn,
-      selectAllPointsBtn,
-      clearBtn,
-    );
-  };
 
   private stagePointerDown = (e: FederatedPointerEvent) => {
     if (e.target !== this.app.stage) return;
@@ -180,7 +150,7 @@ export class PointsAndLinesApp implements IPixiApplication {
     this.selectedPoints.clear();
   };
 
-  private selectAllPointsClick = () => {
+  private selectAllPoints = () => {
     const pointsToSelect = this.app.stage.getChildrenByLabel(
       'point-node',
     ) as PointNode[];
@@ -193,7 +163,7 @@ export class PointsAndLinesApp implements IPixiApplication {
     });
   };
 
-  private drawStraightLinesClick = () => {
+  private drawStraightLines = () => {
     const selectedPoints = Array.from(this.selectedPoints);
     if (selectedPoints.length < 2) return;
 
@@ -211,7 +181,7 @@ export class PointsAndLinesApp implements IPixiApplication {
     this.deselectSelectedPoints();
   };
 
-  private drawCurvedLinesClick = () => {
+  private drawCurvedLines = () => {
     const selectedPoints = Array.from(this.selectedPoints);
 
     if (selectedPoints.length < 2) return;
@@ -252,7 +222,7 @@ export class PointsAndLinesApp implements IPixiApplication {
     this.deselectSelectedPoints();
   };
 
-  private clearClick = () => {
+  private clearAll = () => {
     const labelsToCheck = [
       'point-node',
       'straight-line-node',
