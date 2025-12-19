@@ -1,9 +1,4 @@
-import {
-  Application,
-  FederatedPointerEvent,
-  Point,
-  Rectangle,
-} from 'pixi.js';
+import { Application, FederatedPointerEvent, Point, Rectangle } from 'pixi.js';
 
 import type { IPixiApplication } from '@/features/pixiCanvas';
 import { CurvedLineNode } from './CurvedLineNode';
@@ -29,10 +24,7 @@ export class PointsAndLinesApp implements IPixiApplication<PointsAndLinesAppProp
   private selectionStartPoint: Point | null = null;
   private selectionArea: RectangleNode | null = null;
 
-  constructor(
-    container: HTMLDivElement,
-    updateProps?: PointsAndLinesAppProps,
-  ) {
+  constructor(container: HTMLDivElement, updateProps?: PointsAndLinesAppProps) {
     this.app = new Application();
     this.container = container;
     if (updateProps) {
@@ -209,12 +201,37 @@ export class PointsAndLinesApp implements IPixiApplication<PointsAndLinesAppProp
       if (!endPoint) {
         endPoint = controlPoint;
 
-        const controlPointX =
-          startPoint.x + (endPoint.x - startPoint.x) / 2 + 20;
-        const controlPointY =
-          startPoint.y + (endPoint.y - startPoint.y) / 2 + 20;
+        if (i >= 2) {
+          const prevStart = selectedPoints[i - 2];
+          const prevPassThrough = selectedPoints[i - 1];
+          const currentStart = startPoint;
+          const prevCpX =
+            2 * prevPassThrough.x - (prevStart.x + currentStart.x) / 2;
+          const prevCpY =
+            2 * prevPassThrough.y - (prevStart.y + currentStart.y) / 2;
+          const tangentX = currentStart.x - prevCpX;
+          const tangentY = currentStart.y - prevCpY;
+          const prevLen = Math.sqrt(tangentX * tangentX + tangentY * tangentY);
+          const currLen = Math.sqrt(
+            Math.pow(endPoint.x - startPoint.x, 2) +
+              Math.pow(endPoint.y - startPoint.y, 2),
+          );
+          const scale = prevLen > 0 ? (currLen / prevLen) * 0.5 : 0;
+          const desiredCpX = startPoint.x + tangentX * scale;
+          const desiredCpY = startPoint.y + tangentY * scale;
+          const midX = (startPoint.x + endPoint.x) / 2;
+          const midY = (startPoint.y + endPoint.y) / 2;
 
-        controlPoint = new PointNode(controlPointX, controlPointY);
+          controlPoint = new PointNode(
+            (desiredCpX + midX) / 2,
+            (desiredCpY + midY) / 2,
+          );
+        } else {
+          controlPoint = new PointNode(
+            (startPoint.x + endPoint.x) / 2,
+            (startPoint.y + endPoint.y) / 2,
+          );
+        }
       }
 
       const cpX =
