@@ -1,4 +1,9 @@
-import { Application, FederatedPointerEvent, Point, Rectangle } from 'pixi.js';
+import {
+  Application,
+  FederatedPointerEvent,
+  Point,
+  Rectangle,
+} from 'pixi.js';
 
 import type { IPixiApplication } from '@/features/pixiCanvas';
 import { CurvedLineNode } from './CurvedLineNode';
@@ -23,8 +28,12 @@ export class PointsAndLinesApp implements IPixiApplication<PointsAndLinesAppProp
   private isSelecting = false;
   private selectionStartPoint: Point | null = null;
   private selectionArea: RectangleNode | null = null;
+  private clickTimer: number | null = null;
 
-  constructor(container: HTMLDivElement, updateProps?: PointsAndLinesAppProps) {
+  constructor(
+    container: HTMLDivElement,
+    updateProps?: PointsAndLinesAppProps,
+  ) {
     this.app = new Application();
     this.container = container;
     if (updateProps) {
@@ -67,22 +76,24 @@ export class PointsAndLinesApp implements IPixiApplication<PointsAndLinesAppProp
 
     const { x, y } = e.getLocalPosition(e.currentTarget);
 
-    if (e.button === 1) {
+    if (this.clickTimer) {
       this.isSelecting = true;
       this.selectionStartPoint = new Point(x, y);
-
       this.selectionArea = new RectangleNode(x, y, 1, 1);
 
       this.app.stage.addChild(this.selectionArea);
+      clearTimeout(this.clickTimer);
+      this.clickTimer = null;
+    } else {
+      this.clickTimer = setTimeout(() => {
+        const point = new PointNode(x, y);
 
-      return;
+        point.on('click', this.onPointClick);
+
+        this.app.stage.addChild(point);
+        this.clickTimer = null;
+      }, 300);
     }
-
-    const point = new PointNode(x, y);
-
-    point.on('click', this.onPointClick);
-
-    this.app.stage.addChild(point);
   };
 
   private stageMouseMove = (e: FederatedPointerEvent) => {
@@ -211,7 +222,9 @@ export class PointsAndLinesApp implements IPixiApplication<PointsAndLinesAppProp
             2 * prevPassThrough.y - (prevStart.y + currentStart.y) / 2;
           const tangentX = currentStart.x - prevCpX;
           const tangentY = currentStart.y - prevCpY;
-          const prevLen = Math.sqrt(tangentX * tangentX + tangentY * tangentY);
+          const prevLen = Math.sqrt(
+            tangentX * tangentX + tangentY * tangentY,
+          );
           const currLen = Math.sqrt(
             Math.pow(endPoint.x - startPoint.x, 2) +
               Math.pow(endPoint.y - startPoint.y, 2),
