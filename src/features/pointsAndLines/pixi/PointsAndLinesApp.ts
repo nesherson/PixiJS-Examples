@@ -1,25 +1,48 @@
-import { Application, FederatedPointerEvent, Point, Rectangle } from 'pixi.js';
+import {
+  Application,
+  FederatedPointerEvent,
+  Point,
+  Rectangle,
+} from 'pixi.js';
 
-import { ButtonNode } from './ButtonNode';
+import type { IPixiApplication } from '@/features/pixiCanvas';
 import { CurvedLineNode } from './CurvedLineNode';
 import { PointNode } from './PointNode';
 import { RectangleNode } from './RectangleNode';
 import { StraightLineNode } from './StraightLineNode';
 import { isInArea } from './utils';
-import type { IPixiApplication } from '@/features/pixiCanvas';
 
-export class PointsAndLinesApp implements IPixiApplication {
+export interface PointsAndLinesAppProps {
+  selectAll?: () => void;
+  drawStraightLines?: () => void;
+  drawCurvedLines?: () => void;
+  clearAll?: () => void;
+  drawRandomPoints?: () => void;
+}
+
+export class PointsAndLinesApp implements IPixiApplication<PointsAndLinesAppProps> {
   public app: Application;
   private container: HTMLDivElement;
 
   private selectedPoints: Set<PointNode> = new Set();
   private isSelecting = false;
-  private selectionStartPoint!: Point | null;
-  private selectionArea!: RectangleNode | null;
+  private selectionStartPoint: Point | null = null;
+  private selectionArea: RectangleNode | null = null;
+  private clickTimer: number | null = null;
 
-  constructor(container: HTMLDivElement) {
+  constructor(
+    container: HTMLDivElement,
+    updateProps?: PointsAndLinesAppProps,
+  ) {
     this.app = new Application();
     this.container = container;
+    if (updateProps) {
+      updateProps.selectAll = this.selectAllPoints;
+      updateProps.drawStraightLines = () => this.drawLines('straight');
+      updateProps.drawCurvedLines = () => this.drawLines('curved');
+      updateProps.clearAll = this.clearAll;
+      updateProps.drawRandomPoints = this.drawRandomPoints;
+    }
   }
 
   async init() {
@@ -42,77 +65,35 @@ export class PointsAndLinesApp implements IPixiApplication {
     this.app.stage.on('pointerdown', this.stagePointerDown);
     this.app.stage.on('pointerup', this.stagePointerUp);
     this.app.stage.on('mousemove', this.stageMouseMove);
-
-    this.addButtons();
   }
 
   destroy() {
     this.app.destroy(true, { children: true });
   }
 
-  private addButtons = () => {
-    const drawStraightLinesBtn = new ButtonNode(
-      20,
-      10,
-      120,
-      40,
-      5,
-      'Draw straight',
-    );
-    const drawCurvedLinesBtn = new ButtonNode(
-      160,
-      10,
-      120,
-      40,
-      5,
-      'Draw Curved',
-    );
-    const selectAllPointsBtn = new ButtonNode(
-      300,
-      10,
-      120,
-      40,
-      5,
-      'Select all',
-    );
-    const clearBtn = new ButtonNode(440, 10, 120, 40, 5, 'Clear');
-
-    drawStraightLinesBtn.on('click', this.drawStraightLinesClick);
-    drawCurvedLinesBtn.on('click', this.drawCurvedLinesClick);
-    selectAllPointsBtn.on('click', this.selectAllPointsClick);
-    clearBtn.on('click', this.clearClick);
-
-    this.app.stage.addChild(
-      drawStraightLinesBtn,
-      drawCurvedLinesBtn,
-      selectAllPointsBtn,
-      clearBtn,
-    );
-  };
-
   private stagePointerDown = (e: FederatedPointerEvent) => {
     if (e.target !== this.app.stage) return;
 
     const { x, y } = e.getLocalPosition(e.currentTarget);
 
-    if (this.isInRestrictedArea(x, y)) return;
-
-    if (e.button === 1) {
+    if (this.clickTimer) {
       this.isSelecting = true;
       this.selectionStartPoint = new Point(x, y);
-
       this.selectionArea = new RectangleNode(x, y, 1, 1);
 
       this.app.stage.addChild(this.selectionArea);
+      clearTimeout(this.clickTimer);
+      this.clickTimer = null;
+    } else {
+      this.clickTimer = setTimeout(() => {
+        const point = new PointNode(x, y);
 
-      return;
+        point.on('click', this.onPointClick);
+
+        this.app.stage.addChild(point);
+        this.clickTimer = null;
+      }, 300);
     }
-
-    const point = new PointNode(x, y);
-
-    point.on('click', this.onPointClick);
-
-    this.app.stage.addChild(point);
   };
 
   private stageMouseMove = (e: FederatedPointerEvent) => {
@@ -120,11 +101,6 @@ export class PointsAndLinesApp implements IPixiApplication {
       return;
 
     const { x, y } = e.getLocalPosition(e.currentTarget);
-
-    if (this.isInRestrictedArea(x, y)) {
-      return;
-    }
-
     const width = x - this.selectionStartPoint.x;
     const height = y - this.selectionStartPoint.y;
 
@@ -143,9 +119,11 @@ export class PointsAndLinesApp implements IPixiApplication {
     const points = this.app.stage.children.filter(
       (c) => c.label === 'point-node',
     );
-    const pointsInArea = points.filter((p) =>
-      isInArea(this.selectionArea!, p.x, p.y),
-    ) as PointNode[];
+    const pointsInArea = (
+      points.filter((p) =>
+        isInArea(this.selectionArea!, p.x, p.y),
+      ) as PointNode[]
+    ).filter((p) => p.canBeSelected);
 
     pointsInArea.forEach((p) => {
       p.toggleSelection();
@@ -163,6 +141,8 @@ export class PointsAndLinesApp implements IPixiApplication {
 
     const point = e.currentTarget as PointNode;
 
+    if (!point.canBeSelected) return;
+
     point.toggleSelection();
 
     if (point.isSelected) {
@@ -172,46 +152,52 @@ export class PointsAndLinesApp implements IPixiApplication {
     }
   };
 
-  private deselectSelectedPoints = () => {
-    this.selectedPoints.forEach((sp) => {
+  private deselectSelectedPoints = (disableSelection = false) => {
+    const selectedPoints = Array.from(this.selectedPoints);
+
+    if (selectedPoints.length <= 1) return;
+
+    selectedPoints.forEach((sp) => {
       sp.toggleSelection();
+
+      if (disableSelection) sp.disableSelection();
     });
 
     this.selectedPoints.clear();
   };
 
-  private selectAllPointsClick = () => {
-    const pointsToSelect = this.app.stage.getChildrenByLabel(
-      'point-node',
-    ) as PointNode[];
+  private selectAllPoints = () => {
+    const pointsToSelect = (
+      this.app.stage.getChildrenByLabel('point-node') as PointNode[]
+    ).filter((p) => p.canBeSelected);
 
     if (pointsToSelect.length === 0) return;
 
     pointsToSelect.forEach((p) => {
-      p.toggleSelection();
-      this.selectedPoints.add(p);
+      if (!p.isSelected) {
+        p.toggleSelection();
+        this.selectedPoints.add(p);
+      }
     });
   };
 
-  private drawStraightLinesClick = () => {
+  private drawStraightLines = () => {
     const selectedPoints = Array.from(this.selectedPoints);
     if (selectedPoints.length < 2) return;
 
     for (let i = 0; i < selectedPoints.length; i++) {
       if (!selectedPoints[i + 1]) break;
 
-      const newLine = new StraightLineNode(
-        new Point(selectedPoints[i].x, selectedPoints[i].y),
-        new Point(selectedPoints[i + 1].x, selectedPoints[i + 1].y),
-      );
+      const startPoint = selectedPoints[i];
+      const endPoint = selectedPoints[i + 1];
+
+      const newLine = new StraightLineNode(startPoint, endPoint);
 
       this.app.stage.addChild(newLine);
     }
-
-    this.deselectSelectedPoints();
   };
 
-  private drawCurvedLinesClick = () => {
+  private drawCurvedLines = () => {
     const selectedPoints = Array.from(this.selectedPoints);
 
     if (selectedPoints.length < 2) return;
@@ -226,12 +212,39 @@ export class PointsAndLinesApp implements IPixiApplication {
       if (!endPoint) {
         endPoint = controlPoint;
 
-        const controlPointX =
-          startPoint.x + (endPoint.x - startPoint.x) / 2 + 20;
-        const controlPointY =
-          startPoint.y + (endPoint.y - startPoint.y) / 2 + 20;
+        if (i >= 2) {
+          const prevStart = selectedPoints[i - 2];
+          const prevPassThrough = selectedPoints[i - 1];
+          const currentStart = startPoint;
+          const prevCpX =
+            2 * prevPassThrough.x - (prevStart.x + currentStart.x) / 2;
+          const prevCpY =
+            2 * prevPassThrough.y - (prevStart.y + currentStart.y) / 2;
+          const tangentX = currentStart.x - prevCpX;
+          const tangentY = currentStart.y - prevCpY;
+          const prevLen = Math.sqrt(
+            tangentX * tangentX + tangentY * tangentY,
+          );
+          const currLen = Math.sqrt(
+            Math.pow(endPoint.x - startPoint.x, 2) +
+              Math.pow(endPoint.y - startPoint.y, 2),
+          );
+          const scale = prevLen > 0 ? (currLen / prevLen) * 0.5 : 0;
+          const desiredCpX = startPoint.x + tangentX * scale;
+          const desiredCpY = startPoint.y + tangentY * scale;
+          const midX = (startPoint.x + endPoint.x) / 2;
+          const midY = (startPoint.y + endPoint.y) / 2;
 
-        controlPoint = new PointNode(controlPointX, controlPointY);
+          controlPoint = new PointNode(
+            (desiredCpX + midX) / 2,
+            (desiredCpY + midY) / 2,
+          );
+        } else {
+          controlPoint = new PointNode(
+            (startPoint.x + endPoint.x) / 2,
+            (startPoint.y + endPoint.y) / 2,
+          );
+        }
       }
 
       const cpX =
@@ -248,11 +261,9 @@ export class PointsAndLinesApp implements IPixiApplication {
 
       this.app.stage.addChild(newLine);
     }
-
-    this.deselectSelectedPoints();
   };
 
-  private clearClick = () => {
+  private clearAll = () => {
     const labelsToCheck = [
       'point-node',
       'straight-line-node',
@@ -266,16 +277,25 @@ export class PointsAndLinesApp implements IPixiApplication {
     this.selectedPoints.clear();
   };
 
-  private isInRestrictedArea = (x: number, y: number) => {
-    return isInArea(
-      new RectangleNode(
-        0,
-        0,
-        this.app.screen.width,
-        this.app.screen.height * 0.07,
-      ),
-      x,
-      y,
-    );
+  private drawRandomPoints = () => {
+    const count = Math.floor(Math.random() * 10) + 1;
+
+    for (let i = 0; i < count; i++) {
+      const x = Math.floor(Math.random() * this.app.screen.width);
+      const y = Math.floor(Math.random() * this.app.screen.height);
+
+      const point = new PointNode(x, y);
+      this.app.stage.addChild(point);
+    }
+  };
+
+  private drawLines = (lineType: string) => {
+    if (lineType === 'straight') {
+      this.drawStraightLines();
+    } else if (lineType === 'curved') {
+      this.drawCurvedLines();
+    }
+
+    this.deselectSelectedPoints(true);
   };
 }
