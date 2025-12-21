@@ -5,16 +5,15 @@ export class PointNode extends Graphics {
   public canBeSelected: boolean = true;
   private radius: number = 3;
 
-  constructor(x: number, y: number) {
+  constructor(x?: number, y?: number) {
     super();
-    this.x = x;
-    this.y = y;
+    this.x = x ?? 0;
+    this.y = y ?? 0;
     this.eventMode = 'static';
     this.label = 'point-node';
 
     this.draw();
   }
-
   public draw() {
     this.clear();
 

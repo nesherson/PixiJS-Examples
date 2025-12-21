@@ -1,8 +1,11 @@
 import {
   Application,
+  Container,
   FederatedPointerEvent,
   Point,
   Rectangle,
+  Text,
+  TextStyle,
 } from 'pixi.js';
 
 import type { IPixiApplication } from '@/features/pixiCanvas';
@@ -30,10 +33,7 @@ export class PointsAndLinesApp implements IPixiApplication<PointsAndLinesAppProp
   private selectionArea: RectangleNode | null = null;
   private clickTimer: number | null = null;
 
-  constructor(
-    container: HTMLDivElement,
-    updateProps?: PointsAndLinesAppProps,
-  ) {
+  constructor(container: HTMLDivElement, updateProps?: PointsAndLinesAppProps) {
     this.app = new Application();
     this.container = container;
     if (updateProps) {
@@ -73,6 +73,7 @@ export class PointsAndLinesApp implements IPixiApplication<PointsAndLinesAppProp
 
   private stagePointerDown = (e: FederatedPointerEvent) => {
     if (e.target !== this.app.stage) return;
+    if (e.button === 1) return;
 
     const { x, y } = e.getLocalPosition(e.currentTarget);
 
@@ -86,11 +87,29 @@ export class PointsAndLinesApp implements IPixiApplication<PointsAndLinesAppProp
       this.clickTimer = null;
     } else {
       this.clickTimer = setTimeout(() => {
-        const point = new PointNode(x, y);
+        const points = this.app.stage.children.filter(
+          (c) => c.label === 'point-container-node',
+        );
+        const point = new PointNode();
+        const text = new Text({
+          text: `${points.length + 1}`,
+          x: -10,
+          y: -15,
+          style: new TextStyle({ fontSize: 10 }),
+        });
+        const container = new Container();
+
+        container.label = 'point-container-node';
+        container.x = x;
+        container.y = y;
+
+        container.addChild(point);
+        container.addChild(text);
 
         point.on('click', this.onPointClick);
 
-        this.app.stage.addChild(point);
+        // this.app.stage.addChild(point);
+        this.app.stage.addChild(container);
         this.clickTimer = null;
       }, 300);
     }
@@ -117,7 +136,7 @@ export class PointsAndLinesApp implements IPixiApplication<PointsAndLinesAppProp
     if (!this.isSelecting || !this.selectionArea) return;
 
     const points = this.app.stage.children.filter(
-      (c) => c.label === 'point-node',
+      (c) => c.label === 'point-container-node',
     );
     const pointsInArea = (
       points.filter((p) =>
@@ -168,8 +187,10 @@ export class PointsAndLinesApp implements IPixiApplication<PointsAndLinesAppProp
 
   private selectAllPoints = () => {
     const pointsToSelect = (
-      this.app.stage.getChildrenByLabel('point-node') as PointNode[]
-    ).filter((p) => p.canBeSelected);
+      this.app.stage.getChildrenByLabel('point-container-node') as Container[]
+    )
+      .flatMap((container) => container.children as PointNode[])
+      .filter((p) => p.canBeSelected);
 
     if (pointsToSelect.length === 0) return;
 
@@ -222,9 +243,7 @@ export class PointsAndLinesApp implements IPixiApplication<PointsAndLinesAppProp
             2 * prevPassThrough.y - (prevStart.y + currentStart.y) / 2;
           const tangentX = currentStart.x - prevCpX;
           const tangentY = currentStart.y - prevCpY;
-          const prevLen = Math.sqrt(
-            tangentX * tangentX + tangentY * tangentY,
-          );
+          const prevLen = Math.sqrt(tangentX * tangentX + tangentY * tangentY);
           const currLen = Math.sqrt(
             Math.pow(endPoint.x - startPoint.x, 2) +
               Math.pow(endPoint.y - startPoint.y, 2),
@@ -265,7 +284,7 @@ export class PointsAndLinesApp implements IPixiApplication<PointsAndLinesAppProp
 
   private clearAll = () => {
     const labelsToCheck = [
-      'point-node',
+      'point-container-node',
       'straight-line-node',
       'curved-line-node',
     ];
