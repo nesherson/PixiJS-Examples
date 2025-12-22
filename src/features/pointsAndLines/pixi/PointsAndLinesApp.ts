@@ -77,41 +77,23 @@ export class PointsAndLinesApp implements IPixiApplication<PointsAndLinesAppProp
 
     const { x, y } = e.getLocalPosition(e.currentTarget);
 
-    if (this.clickTimer) {
+    if (e.ctrlKey) {
       this.isSelecting = true;
       this.selectionStartPoint = new Point(x, y);
       this.selectionArea = new RectangleNode(x, y, 1, 1);
 
       this.app.stage.addChild(this.selectionArea);
-      clearTimeout(this.clickTimer);
-      this.clickTimer = null;
     } else {
-      this.clickTimer = setTimeout(() => {
-        const points = this.app.stage.children.filter(
-          (c) => c.label === 'point-container-node',
-        );
-        const point = new PointNode();
-        const text = new Text({
-          text: `${points.length + 1}`,
-          x: -10,
-          y: -15,
-          style: new TextStyle({ fontSize: 10 }),
-        });
-        const container = new Container();
+      const points = this.app.stage.children.filter(
+        (c) => c.label === 'point-node',
+      );
 
-        container.label = 'point-container-node';
-        container.x = x;
-        container.y = y;
+      const pointNode = new PointNode(x, y, points.length + 1);
 
-        container.addChild(point);
-        container.addChild(text);
+      pointNode.point.on('click', this.onPointClick);
 
-        point.on('click', this.onPointClick);
-
-        // this.app.stage.addChild(point);
-        this.app.stage.addChild(container);
-        this.clickTimer = null;
-      }, 300);
+      this.app.stage.addChild(pointNode);
+      this.clickTimer = null;
     }
   };
 
@@ -136,7 +118,7 @@ export class PointsAndLinesApp implements IPixiApplication<PointsAndLinesAppProp
     if (!this.isSelecting || !this.selectionArea) return;
 
     const points = this.app.stage.children.filter(
-      (c) => c.label === 'point-container-node',
+      (c) => c.label === 'point-node',
     );
     const pointsInArea = (
       points.filter((p) =>
@@ -158,7 +140,7 @@ export class PointsAndLinesApp implements IPixiApplication<PointsAndLinesAppProp
   private onPointClick = (e: FederatedPointerEvent) => {
     e.stopPropagation();
 
-    const point = e.currentTarget as PointNode;
+    const point = e.currentTarget.parent as PointNode;
 
     if (!point.canBeSelected) return;
 
@@ -187,10 +169,8 @@ export class PointsAndLinesApp implements IPixiApplication<PointsAndLinesAppProp
 
   private selectAllPoints = () => {
     const pointsToSelect = (
-      this.app.stage.getChildrenByLabel('point-container-node') as Container[]
-    )
-      .flatMap((container) => container.children as PointNode[])
-      .filter((p) => p.canBeSelected);
+      this.app.stage.getChildrenByLabel('point-node') as PointNode[]
+    ).filter((p) => p.canBeSelected);
 
     if (pointsToSelect.length === 0) return;
 
@@ -284,7 +264,7 @@ export class PointsAndLinesApp implements IPixiApplication<PointsAndLinesAppProp
 
   private clearAll = () => {
     const labelsToCheck = [
-      'point-container-node',
+      'point-node',
       'straight-line-node',
       'curved-line-node',
     ];

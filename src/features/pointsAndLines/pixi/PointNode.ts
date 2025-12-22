@@ -1,26 +1,41 @@
-import { Graphics } from 'pixi.js';
+import { Container, Graphics, Text, TextStyle } from 'pixi.js';
 
-export class PointNode extends Graphics {
+export class PointNode extends Container {
+  public point: Graphics;
+  public text: Text;
   public isSelected: boolean = false;
   public canBeSelected: boolean = true;
-  private radius: number = 3;
 
-  constructor(x?: number, y?: number) {
+  private radius: number = 3;
+  private order: number = 0;
+
+  constructor(x: number, y: number, order?: number) {
     super();
+    this.label = 'point-node';
     this.x = x ?? 0;
     this.y = y ?? 0;
-    this.eventMode = 'static';
-    this.label = 'point-node';
+    this.order = order ?? 0;
+    this.point = new Graphics();
+    this.text = new Text({
+      text: this.order.toString(),
+      x: -10,
+      y: -15,
+      style: new TextStyle({ fontSize: 10 }),
+    });
+
+    this.point.eventMode = 'static';
+
+    this.addChild(this.point, this.text);
 
     this.draw();
   }
   public draw() {
-    this.clear();
+    this.point.clear();
 
     const color = this.isSelected ? '#00ff00' : '#ff4d4d';
 
-    this.circle(0, 0, this.radius);
-    this.fill(color);
+    this.point.circle(0, 0, this.radius);
+    this.point.fill(color);
   }
 
   public toggleSelection() {
