@@ -278,12 +278,18 @@ export class PointsAndLinesApp implements IPixiApplication<PointsAndLinesAppProp
 
   private drawRandomPoints = () => {
     const count = Math.floor(Math.random() * 10) + 1;
+    const padding = 15;
+    const innerWidth = this.app.screen.width - padding * 2;
+    const innerHeight = this.app.screen.height - padding * 2;
+    let nextIndex = this.app.stage.children.filter(
+      (c) => c.label === 'point-node',
+    ).length;
 
     for (let i = 0; i < count; i++) {
-      const x = Math.floor(Math.random() * this.app.screen.width);
-      const y = Math.floor(Math.random() * this.app.screen.height);
+      const x = Math.random() * innerWidth + padding;
+      const y = Math.random() * innerHeight + padding;
 
-      const point = new PointNode(x, y);
+      const point = new PointNode(x, y, nextIndex++);
       this.app.stage.addChild(point);
     }
   };
