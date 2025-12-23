@@ -21,6 +21,7 @@ export interface PointsAndLinesAppProps {
   drawCurvedLines?: () => void;
   clearAll?: () => void;
   drawRandomPoints?: () => void;
+  showOrder?: boolean;
 }
 
 export class PointsAndLinesApp implements IPixiApplication<PointsAndLinesAppProps> {
@@ -31,18 +32,11 @@ export class PointsAndLinesApp implements IPixiApplication<PointsAndLinesAppProp
   private isSelecting = false;
   private selectionStartPoint: Point | null = null;
   private selectionArea: RectangleNode | null = null;
-  private clickTimer: number | null = null;
+  private showOrder?: boolean = undefined;
 
-  constructor(container: HTMLDivElement, updateProps?: PointsAndLinesAppProps) {
+  constructor(container: HTMLDivElement) {
     this.app = new Application();
     this.container = container;
-    if (updateProps) {
-      updateProps.selectAll = this.selectAllPoints;
-      updateProps.drawStraightLines = () => this.drawLines('straight');
-      updateProps.drawCurvedLines = () => this.drawLines('curved');
-      updateProps.clearAll = this.clearAll;
-      updateProps.drawRandomPoints = this.drawRandomPoints;
-    }
   }
 
   async init() {
@@ -67,6 +61,22 @@ export class PointsAndLinesApp implements IPixiApplication<PointsAndLinesAppProp
     this.app.stage.on('mousemove', this.stageMouseMove);
   }
 
+  update(updateProps: PointsAndLinesAppProps): void {
+    if (updateProps) {
+      updateProps.selectAll = this.selectAllPoints;
+      updateProps.drawStraightLines = () => this.drawLines('straight');
+      updateProps.drawCurvedLines = () => this.drawLines('curved');
+      updateProps.clearAll = this.clearAll;
+      updateProps.drawRandomPoints = this.drawRandomPoints;
+
+      if (this.showOrder !== updateProps.showOrder) {
+        this.showOrder = updateProps.showOrder;
+
+        this.onShowOrderChanged();
+      }
+    }
+  }
+
   destroy() {
     this.app.destroy(true, { children: true });
   }
@@ -88,12 +98,11 @@ export class PointsAndLinesApp implements IPixiApplication<PointsAndLinesAppProp
         (c) => c.label === 'point-node',
       );
 
-      const pointNode = new PointNode(x, y, points.length + 1);
+      const pointNode = new PointNode(x, y, points.length + 1, this.showOrder);
 
       pointNode.point.on('click', this.onPointClick);
 
       this.app.stage.addChild(pointNode);
-      this.clickTimer = null;
     }
   };
 
@@ -302,5 +311,16 @@ export class PointsAndLinesApp implements IPixiApplication<PointsAndLinesAppProp
     }
 
     this.deselectSelectedPoints(true);
+  };
+
+  private onShowOrderChanged = () => {
+    this.app.stage.children
+      .filter((c) => c.label === 'point-node')
+      .forEach((point) => {
+        const pointNode = point as PointNode;
+
+        pointNode.showOrder = this.showOrder ?? false;
+        pointNode.draw();
+      });
   };
 }

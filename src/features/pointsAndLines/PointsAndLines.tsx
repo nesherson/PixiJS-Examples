@@ -1,19 +1,23 @@
+import { useCallback, useMemo, useState } from 'react';
+
 import { PixiCanvas } from '@/features/pixiCanvas';
 import {
   PointsAndLinesApp,
   type PointsAndLinesAppProps,
 } from './pixi/PointsAndLinesApp';
-import { useMemo } from 'react';
 
 export function PointsAndLines() {
+  const [showOrder, setShowOrder] = useState(false);
+
   const updateProps = useMemo<PointsAndLinesAppProps>(
     () => ({
       selectAll: undefined,
       drawStraightLines: undefined,
       drawCurvedLines: undefined,
       clearAll: undefined,
+      showOrder: showOrder,
     }),
-    [],
+    [showOrder],
   );
 
   const handleSelectAll = () => {
@@ -45,6 +49,10 @@ export function PointsAndLines() {
       updateProps.clearAll();
     }
   };
+
+  const handleShowOrderChange = useCallback(() => {
+    setShowOrder((prev) => !prev);
+  }, []);
 
   return (
     <>
@@ -79,6 +87,15 @@ export function PointsAndLines() {
         >
           Clear all
         </button>
+        <div className="flex gap-1.5 items-center">
+          <label htmlFor="showOrderCb">Show order</label>
+          <input
+            type="checkbox"
+            id="showOrderCb"
+            checked={showOrder}
+            onChange={handleShowOrderChange}
+          />
+        </div>
       </div>
       <PixiCanvas
         applicationClass={PointsAndLinesApp}
@@ -92,7 +109,7 @@ export function PointsAndLines() {
         <p>
           Use "Draw straight" or "Draw curved" to draw lines between points.
         </p>
-        <p>Hold MMB to use selection rectangle.</p>
+        <p>Hold Ctrl + LMB to use selection rectangle.</p>
       </div>
     </>
   );

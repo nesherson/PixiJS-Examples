@@ -48,7 +48,7 @@ export function PixiCanvas<T = undefined>({
         appRef.current = null;
       }
     };
-  }, [Application, updateProps]);
+  }, [Application]);
 
   useEffect(() => {
     if (appRef.current && appRef.current.update && updateProps) {
