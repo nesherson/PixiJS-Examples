@@ -11,16 +11,9 @@ import { PointNode } from './PointNode';
 import { RectangleNode } from './RectangleNode';
 import { StraightLineNode } from './StraightLineNode';
 import { isInArea } from './utils';
+import { ButtonNode } from './ButtonNode';
 
-export interface PointsAndLinesAppProps {
-  selectAll?: () => void;
-  drawStraightLines?: () => void;
-  drawCurvedLines?: () => void;
-  clearAll?: () => void;
-  drawRandomPoints?: () => void;
-}
-
-export class PointsAndLinesApp implements IPixiApplication<PointsAndLinesAppProps> {
+export class PointsAndLinesApp implements IPixiApplication {
   public app: Application;
   private container: HTMLDivElement;
 
@@ -30,19 +23,9 @@ export class PointsAndLinesApp implements IPixiApplication<PointsAndLinesAppProp
   private selectionArea: RectangleNode | null = null;
   private clickTimer: number | null = null;
 
-  constructor(
-    container: HTMLDivElement,
-    updateProps?: PointsAndLinesAppProps,
-  ) {
+  constructor(container: HTMLDivElement) {
     this.app = new Application();
     this.container = container;
-    if (updateProps) {
-      updateProps.selectAll = this.selectAllPoints;
-      updateProps.drawStraightLines = () => this.drawLines('straight');
-      updateProps.drawCurvedLines = () => this.drawLines('curved');
-      updateProps.clearAll = this.clearAll;
-      updateProps.drawRandomPoints = this.drawRandomPoints;
-    }
   }
 
   async init() {
@@ -54,6 +37,16 @@ export class PointsAndLinesApp implements IPixiApplication<PointsAndLinesAppProp
     });
 
     this.container.appendChild(this.app.canvas);
+
+    const btn = new ButtonNode({
+      width: 200,
+      height: 100,
+      fontSize: 35,
+      text: 'button-node',
+      stroke: '#336699',
+    });
+
+    this.app.stage.addChild(btn);
 
     this.app.stage.eventMode = 'static';
     this.app.stage.hitArea = new Rectangle(
