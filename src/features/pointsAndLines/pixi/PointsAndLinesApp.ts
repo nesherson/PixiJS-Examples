@@ -1,9 +1,4 @@
-import {
-  Application,
-  FederatedPointerEvent,
-  Point,
-  Rectangle,
-} from 'pixi.js';
+import { Application, FederatedPointerEvent, Point, Rectangle } from 'pixi.js';
 
 import type { IPixiApplication } from '@/features/pixiCanvas';
 import { CurvedLineNode } from './CurvedLineNode';
@@ -12,6 +7,7 @@ import { RectangleNode } from './RectangleNode';
 import { StraightLineNode } from './StraightLineNode';
 import { isInArea } from './utils';
 import { ButtonNode } from './ButtonNode';
+import { ButtonContainerNode } from './ButtonContainerNode';
 
 export class PointsAndLinesApp implements IPixiApplication {
   public app: Application;
@@ -38,15 +34,7 @@ export class PointsAndLinesApp implements IPixiApplication {
 
     this.container.appendChild(this.app.canvas);
 
-    const btn = new ButtonNode({
-      width: 200,
-      height: 100,
-      fontSize: 35,
-      text: 'button-node',
-      stroke: '#336699',
-    });
-
-    this.app.stage.addChild(btn);
+    await this.addButtons();
 
     this.app.stage.eventMode = 'static';
     this.app.stage.hitArea = new Rectangle(
@@ -62,6 +50,38 @@ export class PointsAndLinesApp implements IPixiApplication {
 
   destroy() {
     this.app.destroy(true, { children: true });
+  }
+
+  private async addButtons() {
+    // const drawStraightLinesBtn = new ButtonNode({
+    //   textFontSize: 16,
+    //   text: 'Draw straight',
+    //   padding: 10,
+    // });
+    // const drawCurvedLinesBtn = new ButtonNode({
+    //   textFontSize: 16,
+    //   text: 'Draw curved',
+    //   padding: 10,
+    // });
+
+    // drawStraightLinesBtn.x = this.app.screen.width * 0.02;
+    // drawStraightLinesBtn.y = this.app.screen.height * 0.02;
+    // drawStraightLinesBtn.on('click', () => this.drawLines('straight'));
+
+    // drawCurvedLinesBtn.x = this.app.screen.width * 0.02;
+    // drawCurvedLinesBtn.y = this.app.screen.height * 0.02;
+    // drawCurvedLinesBtn.on('click', () => this.drawLines('curved'));
+    const buttonsContainer = new ButtonContainerNode({
+      x: this.app.screen.width * 0.02,
+      y: this.app.screen.height * 0.02,
+    })
+      .addButton('Draw straight', () => this.drawLines('straight'))
+      .addButton('Draw curved', () => this.drawLines('curved'))
+      .addButton('Select all', this.clearAll)
+      .addButton('Clear all', this.clearAll)
+      .addButton('Draw random points', this.drawRandomPoints);
+
+    this.app.stage.addChild(buttonsContainer);
   }
 
   private stagePointerDown = (e: FederatedPointerEvent) => {
@@ -215,9 +235,7 @@ export class PointsAndLinesApp implements IPixiApplication {
             2 * prevPassThrough.y - (prevStart.y + currentStart.y) / 2;
           const tangentX = currentStart.x - prevCpX;
           const tangentY = currentStart.y - prevCpY;
-          const prevLen = Math.sqrt(
-            tangentX * tangentX + tangentY * tangentY,
-          );
+          const prevLen = Math.sqrt(tangentX * tangentX + tangentY * tangentY);
           const currLen = Math.sqrt(
             Math.pow(endPoint.x - startPoint.x, 2) +
               Math.pow(endPoint.y - startPoint.y, 2),

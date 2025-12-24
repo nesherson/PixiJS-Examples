@@ -1,66 +1,66 @@
-import { NineSliceSprite, Texture, Text } from 'pixi.js';
+import { Container, Graphics, Text, TextStyle } from 'pixi.js';
 
-interface ButtonNodeSettings {
-  width: number;
-  height: number;
-  fontSize: number;
+interface ButtonNodeProps {
+  x?: number;
+  y?: number;
+  width?: number;
+  height?: number;
+  radius?: number;
   text: string;
-  stroke: string;
+  textFontSize?: number;
+  padding?: number;
+  textColor?: string;
 }
 
-export class ButtonNode extends NineSliceSprite {
-  private settings: ButtonNodeSettings;
+export class ButtonNode extends Container {
+  public isSelected = false;
+  private radius: number = 3;
+  private rectangleWidth = 0;
+  private rectangleHeight = 0;
   private text: Text;
+  private padding?: number;
 
-  constructor(settings: ButtonNodeSettings) {
-    const texture = Texture.from('button');
-    const notScalableArea = 20;
-    super({
-      texture,
-      leftWidth: notScalableArea,
-      rightWidth: notScalableArea,
-      topHeight: notScalableArea,
-      bottomHeight: notScalableArea,
+  constructor({
+    x = 0,
+    y = 0,
+    width,
+    height,
+    radius = 5,
+    text,
+    textFontSize,
+    padding,
+    textColor = '#ffffff',
+  }: ButtonNodeProps) {
+    super();
+    this.x = x;
+    this.y = y;
+    this.radius = radius;
+    this.text = new Text({
+      text: text,
+      style: new TextStyle({ fontSize: textFontSize ?? 12, fill: textColor }),
     });
+    this.rectangleWidth = width ?? 100;
+    this.rectangleHeight = height ?? 30;
+    this.padding = padding;
+    this.eventMode = 'static';
+    this.cursor = 'pointer';
 
-    this.settings = {
-      width: 200,
-      height: 100,
-      fontSize: 35,
-      text: 'button-node',
-      stroke: '#336699',
-      strokeThickness: 4,
-    };
+    if (this.padding) {
+      this.rectangleWidth = this.text.width + this.padding * 2;
+      this.rectangleHeight = this.text.height + this.padding * 2;
+      this.text.x = this.padding;
+      this.text.y = this.padding;
+    }
 
-    this.text = new Text({ text: '' });
+    this.draw();
+  }
+
+  public draw() {
+    const rectangle = new Graphics()
+      .roundRect(0, 0, this.rectangleWidth, this.rectangleHeight, this.radius)
+      .fill('#6da2f7');
+
+    this.addChild(rectangle);
     this.addChild(this.text);
-
-    this.update(settings);
-  }
-
-  update(settings: ButtonNodeSettings) {
-    this.settings = {
-      ...this.settings,
-      ...settings,
-    };
-
-    this.text.text = this.settings.text;
-    this.text.style = {
-      fontSize: this.settings.fontSize + 'px',
-      fill: '#ffffff',
-      stroke: this.settings.stroke,
-    };
-
-    this.onResize();
-  }
-
-  onResize() {
-    this.width = this.settings.width;
-    this.height = this.settings.height;
-
-    this.text.x = this.width * 0.5;
-    this.text.y = this.height * 0.5;
-
-    this.pivot.set(this.width * 0.5, this.height * 0.5);
   }
 }
