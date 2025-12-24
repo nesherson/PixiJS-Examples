@@ -1,21 +1,17 @@
 import { useEffect, useRef } from 'react';
 import type { IPixiApplication, PixiApplicationConstructor } from './types';
 
-interface BaseProps {
+interface PixiCanvasProps {
   className?: string;
+  applicationClass: PixiApplicationConstructor;
 }
 
-type PixiCanvasProps<T> = BaseProps & {
-  applicationClass: PixiApplicationConstructor<T>;
-} & (T extends undefined ? { updateProps?: never } : { updateProps: T });
-
-export function PixiCanvas<T = undefined>({
+export function PixiCanvas({
   applicationClass: Application,
-  updateProps,
   className,
-}: PixiCanvasProps<T>) {
+}: PixiCanvasProps) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const appRef = useRef<IPixiApplication<T> | null>(null);
+  const appRef = useRef<IPixiApplication | null>(null);
   const isInitializingRef = useRef(false);
 
   useEffect(() => {
@@ -24,8 +20,7 @@ export function PixiCanvas<T = undefined>({
     if (!isInitializingRef.current) {
       const instance = new Application(
         containerRef.current,
-        updateProps,
-      ) as IPixiApplication<T>;
+      ) as IPixiApplication;
       appRef.current = instance;
 
       const init = async () => {
@@ -48,13 +43,7 @@ export function PixiCanvas<T = undefined>({
         appRef.current = null;
       }
     };
-  }, [Application, updateProps]);
-
-  useEffect(() => {
-    if (appRef.current && appRef.current.update && updateProps) {
-      appRef.current.update(updateProps);
-    }
-  }, [updateProps]);
+  }, [Application]);
 
   return (
     <div
