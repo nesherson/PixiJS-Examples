@@ -1,10 +1,8 @@
-export interface IPixiApplication<T = undefined> {
+export interface IPixiApplication {
   init(): Promise<void>;
   destroy(): void;
-  update?(updateProps: T): void;
 }
 
-export type PixiApplicationConstructor<T = undefined> = new (
+export type PixiApplicationConstructor = new (
   container: HTMLDivElement,
-  updateProps?: T,
-) => IPixiApplication<T>;
+) => IPixiApplication;
