@@ -1,13 +1,19 @@
-import { Application, FederatedPointerEvent, Point, Rectangle } from 'pixi.js';
+import {
+  Application,
+  FederatedPointerEvent,
+  Graphics,
+  Point,
+  Rectangle,
+  toStrokeStyle,
+} from 'pixi.js';
 
 import type { IPixiApplication } from '@/features/pixiCanvas';
-import { ButtonContainerNode } from './ButtonContainerNode';
+import { SimpleToolbarNode } from './SimpleToolbarNode';
 import { CurvedLineNode } from './CurvedLineNode';
 import { PointNode } from './PointNode';
 import { RectangleNode } from './RectangleNode';
 import { StraightLineNode } from './StraightLineNode';
 import { isInArea } from './utils';
-import { CheckboxNode } from './CheckboxNode';
 
 export class PointsAndLinesApp implements IPixiApplication {
   public app: Application;
@@ -43,16 +49,7 @@ export class PointsAndLinesApp implements IPixiApplication {
       this.app.screen.height,
     );
 
-    this.addButtons();
-
-    const showOrderCb = new CheckboxNode({
-      x: this.app.screen.width * 0.52,
-      y: this.app.screen.height * 0.03,
-      text: 'Show Order',
-    });
-    showOrderCb.onCheckedChanged = this.onShowOrderChanged;
-
-    this.app.stage.addChild(showOrderCb);
+    this.addToolbar();
 
     this.app.stage.on('pointerdown', this.stagePointerDown);
     this.app.stage.on('pointerup', this.stagePointerUp);
@@ -63,8 +60,8 @@ export class PointsAndLinesApp implements IPixiApplication {
     this.app.destroy(true, { children: true });
   }
 
-  private addButtons() {
-    const buttonsContainer = new ButtonContainerNode({
+  private addToolbar() {
+    const buttonsContainer = new SimpleToolbarNode({
       x: this.app.screen.width * 0.02,
       y: this.app.screen.height * 0.02,
     })
@@ -72,7 +69,9 @@ export class PointsAndLinesApp implements IPixiApplication {
       .addButton('Draw curved', () => this.drawLines('curved'))
       .addButton('Select all', this.selectAllPoints)
       .addButton('Clear all', this.clearAll)
-      .addButton('Draw random points', this.drawRandomPoints);
+      .addButton('Draw random points', this.drawRandomPoints)
+      .addButton('Test', this.test)
+      .addCheckbox('Show order', this.onShowOrderChanged);
 
     this.app.stage.addChild(buttonsContainer);
   }
@@ -324,12 +323,36 @@ export class PointsAndLinesApp implements IPixiApplication {
       .forEach((point) => {
         const pointNode = point as PointNode;
 
+        this.showOrder = checked;
         pointNode.showOrder = checked;
+
         pointNode.draw();
       });
   };
 
   private isInsideButtonsContainer = (y: number) => {
     return y < this.BUTTONS_CONTAINER_HEIGHT;
+  };
+
+  test = () => {
+    // draw regular line
+    const line = new Graphics()
+      .moveTo(250, 250)
+      .lineTo(250, 250)
+      .stroke('#000000');
+
+    this.app.stage.addChild(line);
+    let index = 0;
+
+    const ticker = this.app.ticker.add(() => {
+      line.clear();
+      line.moveTo(250, 250);
+      line.lineTo(250 + index++, 250);
+      line.stroke('#000000');
+
+      if (index > 150) {
+        ticker.stop();
+      }
+    });
   };
 }

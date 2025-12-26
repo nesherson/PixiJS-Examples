@@ -1,5 +1,12 @@
 import { Container, Graphics, Text, TextStyle } from 'pixi.js';
 
+interface PointNodeOptions {
+  x?: number;
+  y?: number;
+  order?: number;
+  showOrder?: boolean;
+}
+
 export class PointNode extends Container {
   public point: Graphics;
   public text: Text;
@@ -12,6 +19,7 @@ export class PointNode extends Container {
 
   constructor(x: number, y: number, order?: number, showOrder?: boolean) {
     super();
+
     this.label = 'point-node';
     this.x = x ?? 0;
     this.y = y ?? 0;

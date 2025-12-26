@@ -13,7 +13,7 @@ export function PointsAndLines() {
         <p>
           Use "Draw straight" or "Draw curved" to draw lines between points.
         </p>
-        <p>Hold MMB to use selection rectangle.</p>
+        <p>Press CTRL and LMB to use selection rectangle.</p>
       </div>
     </>
   );

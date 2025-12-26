@@ -1,66 +1,94 @@
 import { Container, Graphics, Text, TextStyle } from 'pixi.js';
 
-interface ButtonNodeProps {
+export interface ButtonNodeOptions {
   x?: number;
   y?: number;
   width?: number;
   height?: number;
   radius?: number;
-  text: string;
+  text?: string;
   textFontSize?: number;
   padding?: number;
   textColor?: string;
+  backgroundColor?: string;
 }
 
 export class ButtonNode extends Container {
+  // Public properties
   public isSelected = false;
-  private radius: number = 3;
-  private rectangleWidth = 0;
-  private rectangleHeight = 0;
-  private text: Text;
-  private padding?: number;
 
-  constructor({
-    x = 0,
-    y = 0,
-    width,
-    height,
-    radius = 5,
-    text,
-    textFontSize,
-    padding,
-    textColor = '#ffffff',
-  }: ButtonNodeProps) {
+  // Private properties
+  private _radius: number = 3;
+  private _rectangleWidth = 0;
+  private _rectangleHeight = 0;
+  private _label: Text;
+  private _background: Graphics;
+  private _padding?: number;
+  private _backgroundColor: string;
+
+  constructor(options: ButtonNodeOptions) {
     super();
+
+    const {
+      x = 0,
+      y = 0,
+      width = 100,
+      height = 30,
+      radius = 5,
+      text = '',
+      textFontSize = 12,
+      padding,
+      textColor = '#ffffff',
+      backgroundColor = '#6da2f7',
+    } = options;
+
     this.x = x;
     this.y = y;
-    this.radius = radius;
-    this.text = new Text({
-      text: text,
-      style: new TextStyle({ fontSize: textFontSize ?? 12, fill: textColor }),
-    });
-    this.rectangleWidth = width ?? 100;
-    this.rectangleHeight = height ?? 30;
-    this.padding = padding;
     this.eventMode = 'static';
     this.cursor = 'pointer';
 
-    if (this.padding) {
-      this.rectangleWidth = this.text.width + this.padding * 2;
-      this.rectangleHeight = this.text.height + this.padding * 2;
-      this.text.x = this.padding;
-      this.text.y = this.padding;
-    }
+    this._radius = radius;
+    this._rectangleWidth = width ?? 100;
+    this._rectangleHeight = height ?? 30;
+    this._padding = padding;
+    this._backgroundColor = backgroundColor;
 
+    this._background = new Graphics();
+    this._label = new Text({
+      text: text,
+      style: new TextStyle({ fontSize: textFontSize, fill: textColor }),
+    });
+
+    this.addChild(this._background);
+    this.addChild(this._label);
+
+    this.recalculateLayout();
     this.draw();
   }
 
   public draw() {
-    const rectangle = new Graphics()
-      .roundRect(0, 0, this.rectangleWidth, this.rectangleHeight, this.radius)
-      .fill('#6da2f7');
+    this._background
+      .clear()
+      .roundRect(
+        0,
+        0,
+        this._rectangleWidth,
+        this._rectangleHeight,
+        this._radius,
+      )
+      .fill(this._backgroundColor);
+  }
 
-    this.addChild(rectangle);
-    this.addChild(this.text);
+  private recalculateLayout() {
+    if (this._padding) {
+      this._rectangleWidth = this._label.width + this._padding * 2;
+      this._rectangleHeight = this._label.height + this._padding * 2;
+      this._label.x = this._padding;
+      this._label.y = this._padding;
+    } else {
+      this._label.anchor.set(0.5);
+      this._label.x = this._rectangleWidth / 2;
+      this._label.y = this._rectangleHeight / 2;
+    }
   }
 }
