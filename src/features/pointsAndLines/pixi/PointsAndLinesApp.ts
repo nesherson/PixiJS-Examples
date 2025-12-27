@@ -133,7 +133,7 @@ export class PointsAndLinesApp implements IPixiApplication {
       points.filter((p) =>
         isInArea(this.selectionArea!, p.x, p.y),
       ) as PointNode[]
-    ).filter((p) => p.canBeSelected);
+    ).filter((p) => p.canBeSelected && !p.isSelected);
 
     pointsInArea.forEach((p) => {
       p.toggleSelection();
