@@ -1,21 +1,14 @@
 import { Container, Graphics, Text, TextStyle } from 'pixi.js';
 
-interface PointNodeOptions {
-  x?: number;
-  y?: number;
-  order?: number;
-  showOrder?: boolean;
-}
-
 export class PointNode extends Container {
   public point: Graphics;
   public text: Text;
   public isSelected: boolean = false;
   public canBeSelected: boolean = true;
   public showOrder = false;
+  public order: number = 0;
 
   private radius: number = 3;
-  private order: number = 0;
 
   constructor(x: number, y: number, order?: number, showOrder?: boolean) {
     super();

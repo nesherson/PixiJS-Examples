@@ -1,16 +1,10 @@
-import {
-  Application,
-  FederatedPointerEvent,
-  Graphics,
-  Point,
-  Rectangle,
-} from 'pixi.js';
+import { Application, FederatedPointerEvent, Point, Rectangle } from 'pixi.js';
 
 import type { IPixiApplication } from '@/features/pixiCanvas';
-import { SimpleToolbarNode } from './SimpleToolbarNode';
 import { CurvedLineNode } from './CurvedLineNode';
 import { PointNode } from './PointNode';
 import { RectangleNode } from './RectangleNode';
+import { SimpleToolbarNode } from './SimpleToolbarNode';
 import { StraightLineNode } from './StraightLineNode';
 import { isInArea } from './utils';
 
@@ -69,7 +63,6 @@ export class PointsAndLinesApp implements IPixiApplication {
       .addButton('Select all', this.selectAllPoints)
       .addButton('Clear all', this.clearAll)
       .addButton('Draw random points', this.drawRandomPoints)
-      .addButton('Test', this.test)
       .addCheckbox('Show order', this.onShowOrderChanged);
 
     this.app.stage.addChild(buttonsContainer);
@@ -338,27 +331,5 @@ export class PointsAndLinesApp implements IPixiApplication {
 
   private isInsideButtonsContainer = (y: number) => {
     return y < this.BUTTONS_CONTAINER_HEIGHT;
-  };
-
-  test = () => {
-    // draw regular line
-    const line = new Graphics()
-      .moveTo(250, 250)
-      .lineTo(250, 250)
-      .stroke('#000000');
-
-    this.app.stage.addChild(line);
-    let index = 0;
-
-    const ticker = this.app.ticker.add(() => {
-      line.clear();
-      line.moveTo(250, 250);
-      line.lineTo(250 + index++, 250);
-      line.stroke('#000000');
-
-      if (index > 150) {
-        ticker.stop();
-      }
-    });
   };
 }
