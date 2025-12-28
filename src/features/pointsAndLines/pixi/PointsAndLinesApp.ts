@@ -1,10 +1,10 @@
 import { Application, FederatedPointerEvent, Point, Rectangle } from 'pixi.js';
 
 import type { IPixiApplication } from '@/features/pixiCanvas';
-import { ButtonContainerNode } from './ButtonContainerNode';
 import { CurvedLineNode } from './CurvedLineNode';
 import { PointNode } from './PointNode';
 import { RectangleNode } from './RectangleNode';
+import { SimpleToolbarNode } from './SimpleToolbarNode';
 import { StraightLineNode } from './StraightLineNode';
 import { isInArea } from './utils';
 
@@ -17,6 +17,7 @@ export class PointsAndLinesApp implements IPixiApplication {
   private isSelecting = false;
   private selectionStartPoint: Point | null = null;
   private selectionArea: RectangleNode | null = null;
+  private showOrder?: boolean = undefined;
 
   constructor(container: HTMLDivElement) {
     this.app = new Application();
@@ -41,7 +42,7 @@ export class PointsAndLinesApp implements IPixiApplication {
       this.app.screen.height,
     );
 
-    this.addButtons();
+    this.addToolbar();
 
     this.app.stage.on('pointerdown', this.stagePointerDown);
     this.app.stage.on('pointerup', this.stagePointerUp);
@@ -52,8 +53,8 @@ export class PointsAndLinesApp implements IPixiApplication {
     this.app.destroy(true, { children: true });
   }
 
-  private addButtons() {
-    const buttonsContainer = new ButtonContainerNode({
+  private addToolbar() {
+    const buttonsContainer = new SimpleToolbarNode({
       x: this.app.screen.width * 0.02,
       y: this.app.screen.height * 0.02,
     })
@@ -61,13 +62,15 @@ export class PointsAndLinesApp implements IPixiApplication {
       .addButton('Draw curved', () => this.drawLines('curved'))
       .addButton('Select all', this.selectAllPoints)
       .addButton('Clear all', this.clearAll)
-      .addButton('Draw random points', this.drawRandomPoints);
+      .addButton('Draw random points', this.drawRandomPoints)
+      .addCheckbox('Show order', this.onShowOrderChanged);
 
     this.app.stage.addChild(buttonsContainer);
   }
 
   private stagePointerDown = (e: FederatedPointerEvent) => {
     if (e.target !== this.app.stage) return;
+    if (e.button === 1) return;
 
     const { x, y } = e.getLocalPosition(e.currentTarget);
 
@@ -79,15 +82,17 @@ export class PointsAndLinesApp implements IPixiApplication {
       this.selectionArea = new RectangleNode(x, y, 1, 1);
 
       this.app.stage.addChild(this.selectionArea);
+    } else {
+      const points = this.app.stage.children.filter(
+        (c) => c.label === 'point-node',
+      );
 
-      return;
+      const pointNode = new PointNode(x, y, points.length + 1, this.showOrder);
+
+      pointNode.point.on('click', this.onPointClick);
+
+      this.app.stage.addChild(pointNode);
     }
-
-    const point = new PointNode(x, y);
-
-    point.on('click', this.onPointClick);
-
-    this.app.stage.addChild(point);
   };
 
   private stageMouseMove = (e: FederatedPointerEvent) => {
@@ -120,7 +125,7 @@ export class PointsAndLinesApp implements IPixiApplication {
       points.filter((p) =>
         isInArea(this.selectionArea!, p.x, p.y),
       ) as PointNode[]
-    ).filter((p) => p.canBeSelected);
+    ).filter((p) => p.canBeSelected && !p.isSelected);
 
     pointsInArea.forEach((p) => {
       p.toggleSelection();
@@ -136,7 +141,7 @@ export class PointsAndLinesApp implements IPixiApplication {
   private onPointClick = (e: FederatedPointerEvent) => {
     e.stopPropagation();
 
-    const point = e.currentTarget as PointNode;
+    const point = e.currentTarget.parent as PointNode;
 
     if (!point.canBeSelected) return;
 
@@ -179,7 +184,10 @@ export class PointsAndLinesApp implements IPixiApplication {
   };
 
   private drawStraightLines = () => {
-    const selectedPoints = Array.from(this.selectedPoints);
+    const selectedPoints = Array.from(this.selectedPoints).sort(
+      (a, b) => a.order - b.order,
+    );
+
     if (selectedPoints.length < 2) return;
 
     for (let i = 0; i < selectedPoints.length; i++) {
@@ -195,7 +203,9 @@ export class PointsAndLinesApp implements IPixiApplication {
   };
 
   private drawCurvedLines = () => {
-    const selectedPoints = Array.from(this.selectedPoints);
+    const selectedPoints = Array.from(this.selectedPoints).sort(
+      (a, b) => a.order - b.order,
+    );
 
     if (selectedPoints.length < 2) return;
 
@@ -274,17 +284,25 @@ export class PointsAndLinesApp implements IPixiApplication {
 
   private drawRandomPoints = () => {
     const count = Math.floor(Math.random() * 10) + 1;
+    const padding = 15;
+    const innerWidth = this.app.screen.width - padding * 2;
+    const innerHeight = this.app.screen.height - padding * 2;
+    let nextIndex =
+      this.app.stage.children.filter((c) => c.label === 'point-node').length +
+      1;
 
     for (let i = 0; i < count; i++) {
-      const x = Math.floor(Math.random() * this.app.screen.width);
-      let y = Math.floor(Math.random() * this.app.screen.height);
+      const x = Math.random() * innerWidth + padding;
+      let y = Math.random() * innerHeight + padding;
 
       while (this.isInsideButtonsContainer(y)) {
-        y = Math.floor(Math.random() * this.app.screen.height);
+        y = Math.random() * innerHeight + padding;
       }
 
-      const point = new PointNode(x, y);
+      const point = new PointNode(x, y, nextIndex, this.showOrder);
       this.app.stage.addChild(point);
+
+      nextIndex++;
     }
   };
 
@@ -296,6 +314,19 @@ export class PointsAndLinesApp implements IPixiApplication {
     }
 
     this.deselectSelectedPoints(true);
+  };
+
+  private onShowOrderChanged = (checked: boolean) => {
+    this.app.stage.children
+      .filter((c) => c.label === 'point-node')
+      .forEach((point) => {
+        const pointNode = point as PointNode;
+
+        this.showOrder = checked;
+        pointNode.showOrder = checked;
+
+        pointNode.draw();
+      });
   };
 
   private isInsideButtonsContainer = (y: number) => {
