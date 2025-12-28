@@ -4,7 +4,6 @@ import {
   Graphics,
   Point,
   Rectangle,
-  toStrokeStyle,
 } from 'pixi.js';
 
 import type { IPixiApplication } from '@/features/pixiCanvas';
@@ -192,7 +191,10 @@ export class PointsAndLinesApp implements IPixiApplication {
   };
 
   private drawStraightLines = () => {
-    const selectedPoints = Array.from(this.selectedPoints);
+    const selectedPoints = Array.from(this.selectedPoints).sort(
+      (a, b) => a.order - b.order,
+    );
+
     if (selectedPoints.length < 2) return;
 
     for (let i = 0; i < selectedPoints.length; i++) {
@@ -208,7 +210,9 @@ export class PointsAndLinesApp implements IPixiApplication {
   };
 
   private drawCurvedLines = () => {
-    const selectedPoints = Array.from(this.selectedPoints);
+    const selectedPoints = Array.from(this.selectedPoints).sort(
+      (a, b) => a.order - b.order,
+    );
 
     if (selectedPoints.length < 2) return;
 
@@ -290,9 +294,9 @@ export class PointsAndLinesApp implements IPixiApplication {
     const padding = 15;
     const innerWidth = this.app.screen.width - padding * 2;
     const innerHeight = this.app.screen.height - padding * 2;
-    let nextIndex = this.app.stage.children.filter(
-      (c) => c.label === 'point-node',
-    ).length;
+    let nextIndex =
+      this.app.stage.children.filter((c) => c.label === 'point-node').length +
+      1;
 
     for (let i = 0; i < count; i++) {
       const x = Math.random() * innerWidth + padding;
@@ -302,8 +306,10 @@ export class PointsAndLinesApp implements IPixiApplication {
         y = Math.random() * innerHeight + padding;
       }
 
-      const point = new PointNode(x, y, nextIndex++);
+      const point = new PointNode(x, y, nextIndex, this.showOrder);
       this.app.stage.addChild(point);
+
+      nextIndex++;
     }
   };
 
