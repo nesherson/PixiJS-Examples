@@ -11,6 +11,7 @@ import {
 } from 'pixi.js';
 
 import { type IPixiApplication } from '@/features/pixiCanvas';
+import { RangeSliderNode } from '@/features/pointsAndLines/pixi/RangeSliderNode';
 
 export interface GettingStartedAppUpdateProps {
   bunnyTwoMoveSpeed: number;
@@ -18,7 +19,7 @@ export interface GettingStartedAppUpdateProps {
   bunnyFourRotationSpeed: number;
 }
 
-export class GettingStartedApp implements IPixiApplication<GettingStartedAppUpdateProps> {
+export class GettingStartedApp implements IPixiApplication {
   public app: Application;
   private container: HTMLDivElement;
   private bunnyTwoMoveSpeed = 1;
@@ -91,10 +92,23 @@ export class GettingStartedApp implements IPixiApplication<GettingStartedAppUpda
     this.bunnyOne.eventMode = 'static';
     this.bunnyOne.on('click', this.bunnyOneClick);
 
-    this.app.stage.addChild(this.bunnyOne);
-    this.app.stage.addChild(this.bunnyTwo);
-    this.app.stage.addChild(this.bunnyThree);
-    this.app.stage.addChild(this.bunnyFour);
+    const rangeSlider = new RangeSliderNode({
+      min: 0,
+      max: 10,
+      value: 5,
+      width: 200,
+      height: 20,
+    });
+
+    rangeSlider.position.set(25, 25);
+    this.app.stage.addChild(rangeSlider);
+
+    this.app.stage.addChild(
+      this.bunnyOne,
+      this.bunnyTwo,
+      this.bunnyThree,
+      this.bunnyFour,
+    );
   }
 
   private animate = (time: Ticker) => {
