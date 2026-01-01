@@ -1,4 +1,4 @@
-import { FederatedPointerEvent, Graphics, Point } from 'pixi.js';
+import { FederatedPointerEvent, Graphics, TextStyle, Text } from 'pixi.js';
 
 export interface RangeSliderOptions {
   min?: number;
@@ -8,6 +8,7 @@ export interface RangeSliderOptions {
   height?: number;
   handleRadius?: number;
   onChange?: (value: number) => void;
+  text?: string;
 }
 
 export class RangeSliderNode extends Graphics {
@@ -26,6 +27,7 @@ export class RangeSliderNode extends Graphics {
   private _value: number;
   private dragging: boolean = false;
   private handle: Graphics;
+  private text?: Text;
 
   constructor(options: RangeSliderOptions = {}) {
     super();
@@ -39,8 +41,9 @@ export class RangeSliderNode extends Graphics {
     this.onValueChange = options.onChange ?? (() => {});
 
     this.handle = new Graphics();
-    this._initHandle();
 
+    this._initHandle();
+    this._initText(options.text ?? '');
     this._draw();
 
     this.eventMode = 'static';
@@ -75,6 +78,17 @@ export class RangeSliderNode extends Graphics {
 
     this.addChild(this.handle);
     this._updateHandlePosition();
+  }
+
+  private _initText(text: string) {
+    this.text = new Text({
+      text: text,
+      x: this.width / 2,
+      y: this.y - this.height - 5,
+      style: new TextStyle({ fontSize: 12 }),
+    });
+
+    this.addChild(this.text);
   }
 
   private _draw() {

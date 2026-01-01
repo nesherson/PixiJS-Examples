@@ -98,9 +98,10 @@ export class GettingStartedApp implements IPixiApplication {
       value: 5,
       width: 200,
       height: 20,
+      text: 'Bunny 2 move speed',
     });
 
-    rangeSlider.position.set(25, 25);
+    rangeSlider.position.set(25, 40);
     this.app.stage.addChild(rangeSlider);
 
     this.app.stage.addChild(
@@ -128,7 +129,8 @@ export class GettingStartedApp implements IPixiApplication {
       'bunny-sprite',
     ) as Sprite;
 
-    bunnyThreeSprite.rotation += this.bunnyThreeRotationSpeed * time.deltaTime;
+    bunnyThreeSprite.rotation +=
+      this.bunnyThreeRotationSpeed * time.deltaTime;
 
     this.bunnyFour.x =
       this.app.screen.width * 0.8 +
