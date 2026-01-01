@@ -1,4 +1,4 @@
-import * as PIXI from 'pixi.js';
+import { FederatedPointerEvent, Graphics, Point } from 'pixi.js';
 
 export interface RangeSliderOptions {
   min?: number;
@@ -10,7 +10,7 @@ export interface RangeSliderOptions {
   onChange?: (value: number) => void;
 }
 
-export class RangeSliderNode extends PIXI.Graphics {
+export class RangeSliderNode extends Graphics {
   public min: number;
   public max: number;
   public sliderWidth: number;
@@ -25,7 +25,7 @@ export class RangeSliderNode extends PIXI.Graphics {
 
   private _value: number;
   private dragging: boolean = false;
-  private handle: PIXI.Graphics;
+  private handle: Graphics;
 
   constructor(options: RangeSliderOptions = {}) {
     super();
@@ -38,7 +38,7 @@ export class RangeSliderNode extends PIXI.Graphics {
     this.handleRadius = options.handleRadius ?? 10;
     this.onValueChange = options.onChange ?? (() => {});
 
-    this.handle = new PIXI.Graphics();
+    this.handle = new Graphics();
     this._initHandle();
 
     this._draw();
@@ -60,23 +60,24 @@ export class RangeSliderNode extends PIXI.Graphics {
     this.onValueChange(this._value);
   }
 
-  private _initHandle(): void {
+  private _initHandle() {
     this.handle.eventMode = 'static';
     this.handle.cursor = 'grab';
 
-    this.handle.beginFill(this.handleColor);
-    this.handle.lineStyle(1, this.borderColor);
-    this.handle.drawCircle(0, 0, this.handleRadius);
-    this.handle.endFill();
+    this.handle
+      .circle(0, 0, this.handleRadius)
+      .fill(this.handleColor)
+      .stroke(this.borderColor);
 
-    // Setup Handle Events
     this.handle.on('pointerdown', this._onDragStart, this);
+    this.handle.on('pointermove', this._onDragMove, this);
+    this.handle.on('pointerup', this._onDragEnd, this);
 
     this.addChild(this.handle);
     this._updateHandlePosition();
   }
 
-  private _draw(): void {
+  private _draw() {
     this.clear();
 
     this.roundRect(
@@ -100,54 +101,49 @@ export class RangeSliderNode extends PIXI.Graphics {
     }
   }
 
-  private _updateHandlePosition(): void {
+  private _updateHandlePosition() {
     const range = this.max - this.min;
     const percent = (this._value - this.min) / range;
     this.handle.x = percent * this.sliderWidth;
     this.handle.y = 0;
   }
 
-  private _onDragStart(event: PIXI.FederatedPointerEvent): void {
+  private _onDragStart(event: FederatedPointerEvent) {
     event.stopPropagation();
 
     this.dragging = true;
     this.handle.cursor = 'grabbing';
     this.handle.alpha = 0.8;
 
-    window.addEventListener('pointermove', this._onDragMove);
-    window.addEventListener('pointerup', this._onDragEnd);
+    const localPos = event.getLocalPosition(this);
+
+    this._updateValueFromX(localPos.x);
   }
 
-  private _onDragEnd = (): void => {
+  private _onDragEnd = () => {
     this.dragging = false;
     this.handle.cursor = 'grab';
     this.handle.alpha = 1;
-
-    window.removeEventListener('pointermove', this._onDragMove);
-    window.removeEventListener('pointerup', this._onDragEnd);
   };
 
-  private _onDragMove = (event: PointerEvent): void => {
+  private _onDragMove = (event: FederatedPointerEvent) => {
     if (!this.dragging) return;
-
     if (!this.parent) return;
 
-    const globalPos = new PIXI.Point(event.clientX, event.clientY);
-    const localPos = this.toLocal(globalPos);
+    const localPos = event.getLocalPosition(this);
 
     this._updateValueFromX(localPos.x);
   };
 
-  private _onTrackDown(event: PIXI.FederatedPointerEvent): void {
+  private _onTrackDown(event: FederatedPointerEvent) {
     const localPos = event.getLocalPosition(this);
-    this._updateValueFromX(localPos.x);
 
+    this._updateValueFromX(localPos.x);
     this._onDragStart(event);
   }
 
-  private _updateValueFromX(x: number): void {
+  private _updateValueFromX(x: number) {
     const clampedX = Math.max(0, Math.min(this.sliderWidth, x));
-
     const percent = clampedX / this.sliderWidth;
     const range = this.max - this.min;
     const newValue = this.min + range * percent;
