@@ -11,7 +11,7 @@ import {
 } from 'pixi.js';
 
 import { type IPixiApplication } from '@/features/pixiCanvas';
-import { RangeSliderNode } from '@/features/pointsAndLines/pixi/RangeSliderNode';
+import { SimpleToolbarNode } from '@/features/pointsAndLines/pixi/SimpleToolbarNode';
 
 export interface GettingStartedAppUpdateProps {
   bunnyTwoMoveSpeed: number;
@@ -46,6 +46,7 @@ export class GettingStartedApp implements IPixiApplication {
     });
     this.container.appendChild(this.app.canvas);
     await this.createBunnies();
+    this.addToolbar();
     this.app.ticker.add(this.animate);
   }
 
@@ -53,10 +54,46 @@ export class GettingStartedApp implements IPixiApplication {
     this.app.destroy(true, { children: true });
   }
 
-  update(updateProps: GettingStartedAppUpdateProps): void {
-    this.bunnyTwoMoveSpeed = updateProps.bunnyTwoMoveSpeed;
-    this.bunnyThreeRotationSpeed = updateProps.bunnyThreeRotationSpeed;
-    this.bunnyFourRotationSpeed = updateProps.bunnyFourRotationSpeed;
+  private addToolbar() {
+    const toolbar = new SimpleToolbarNode({
+      x: this.app.screen.width * 0.02,
+      y: this.app.screen.height * 0.07,
+    })
+      .addSlider({
+        min: 0,
+        max: 10,
+        value: 5,
+        width: 200,
+        height: 8,
+        text: 'Bunny 2 Move Speed',
+        onChange: (value) => {
+          this.bunnyTwoMoveSpeed = value;
+        },
+      })
+      .addSlider({
+        min: 0.1,
+        max: 1,
+        value: 0.5,
+        width: 200,
+        height: 8,
+        text: 'Bunny 3 Rotation Speed',
+        onChange: (value) => {
+          this.bunnyThreeRotationSpeed = value;
+        },
+      })
+      .addSlider({
+        min: 0.1,
+        max: 1,
+        value: 0.5,
+        width: 200,
+        height: 8,
+        text: 'Bunny 4 Rotation Speed',
+        onChange: (value) => {
+          this.bunnyFourRotationSpeed = value;
+        },
+      });
+
+    this.app.stage.addChild(toolbar);
   }
 
   async createBunnies() {
@@ -91,19 +128,6 @@ export class GettingStartedApp implements IPixiApplication {
 
     this.bunnyOne.eventMode = 'static';
     this.bunnyOne.on('click', this.bunnyOneClick);
-
-    const rangeSlider = new RangeSliderNode({
-      min: 0,
-      max: 10,
-      value: 5,
-      width: 200,
-      height: 20,
-      text: 'Bunny 2 move speed',
-    });
-
-    rangeSlider.position.set(25, 40);
-    this.app.stage.addChild(rangeSlider);
-
     this.app.stage.addChild(
       this.bunnyOne,
       this.bunnyTwo,
