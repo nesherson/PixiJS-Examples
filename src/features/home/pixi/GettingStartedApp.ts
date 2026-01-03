@@ -3,6 +3,7 @@ import {
   Assets,
   Container,
   FederatedPointerEvent,
+  Rectangle,
   Sprite,
   Text,
   TextStyle,
@@ -44,6 +45,14 @@ export class GettingStartedApp implements IPixiApplication {
       width: 800,
       height: 600,
     });
+    this.app.stage.eventMode = 'static';
+    this.app.stage.hitArea = new Rectangle(
+      0,
+      0,
+      this.app.screen.width,
+      this.app.screen.height,
+    );
+
     this.container.appendChild(this.app.canvas);
     await this.createBunnies();
     this.addToolbar();
@@ -60,7 +69,7 @@ export class GettingStartedApp implements IPixiApplication {
       y: this.app.screen.height * 0.07,
     })
       .addSlider({
-        min: 0,
+        min: 1,
         max: 10,
         value: 5,
         width: 200,
@@ -69,6 +78,7 @@ export class GettingStartedApp implements IPixiApplication {
         onChange: (value) => {
           this.bunnyTwoMoveSpeed = value;
         },
+        stage: this.app.stage,
       })
       .addSlider({
         min: 0.1,

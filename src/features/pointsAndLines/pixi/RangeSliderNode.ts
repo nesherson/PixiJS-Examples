@@ -1,3 +1,4 @@
+import { getStage } from '@/utils/pixi';
 import {
   FederatedPointerEvent,
   Graphics,
@@ -17,6 +18,7 @@ export interface RangeSliderOptions {
   handleRadius?: number;
   onChange?: (value: number) => void;
   text?: string;
+  stage?: Container;
 }
 
 export class RangeSliderNode extends Container {
@@ -66,7 +68,7 @@ export class RangeSliderNode extends Container {
     this.track.eventMode = 'static';
     this.track.cursor = 'pointer';
 
-    this.track.on('pointerdown', this._onTrackDown, this);
+    this.track.on('pointerdown', this._onTrackDown);
   }
 
   public get value(): number {
@@ -90,8 +92,6 @@ export class RangeSliderNode extends Container {
       .stroke(this.handleBorderColor);
 
     this.handle.on('pointerdown', this._onDragStart, this);
-    this.handle.on('pointermove', this._onDragMove, this);
-    this.handle.on('pointerup', this._onDragEnd, this);
 
     this.addChild(this.handle);
     this._updateHandlePosition();
@@ -152,19 +152,31 @@ export class RangeSliderNode extends Container {
     this.handle.alpha = 0.8;
 
     const localPos = event.getLocalPosition(this);
+    const stage = getStage(this);
 
     this._updateValueFromX(localPos.x);
+
+    if (stage) {
+      stage.on('pointermove', this._onDragMove);
+      stage.on('pointerup', this._onDragEnd);
+    }
   }
 
   private _onDragEnd = () => {
     this.dragging = false;
     this.handle.cursor = 'grab';
     this.handle.alpha = 1;
+
+    const stage = getStage(this);
+
+    if (stage) {
+      stage.off('pointermove', this._onDragMove);
+      stage.off('pointerup', this._onDragEnd);
+    }
   };
 
   private _onDragMove = (event: FederatedPointerEvent) => {
     if (!this.dragging) return;
-    if (!this.parent) return;
 
     const localPos = event.getLocalPosition(this);
 
