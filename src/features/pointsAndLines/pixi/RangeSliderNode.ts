@@ -1,6 +1,14 @@
-import { FederatedPointerEvent, Graphics, TextStyle, Text } from 'pixi.js';
+import {
+  FederatedPointerEvent,
+  Graphics,
+  TextStyle,
+  Text,
+  Container,
+} from 'pixi.js';
 
 export interface RangeSliderOptions {
+  x?: number;
+  y?: number;
   min?: number;
   max?: number;
   value?: number;
@@ -11,7 +19,7 @@ export interface RangeSliderOptions {
   text?: string;
 }
 
-export class RangeSliderNode extends Graphics {
+export class RangeSliderNode extends Container {
   public min: number;
   public max: number;
   public sliderWidth: number;
@@ -22,16 +30,20 @@ export class RangeSliderNode extends Graphics {
   public trackColor: number = 0xdddddd;
   public fillColor: number = 0x3e89f5;
   public handleColor: number = 0xffffff;
-  public borderColor: number = 0x999999;
+  public borderColor: number = 0x333333;
+  public handleBorderColor: number = 0x999999;
 
   private _value: number;
   private dragging: boolean = false;
   private handle: Graphics;
+  private track: Graphics;
   private text?: Text;
 
   constructor(options: RangeSliderOptions = {}) {
     super();
 
+    this.x = options.x ?? 0;
+    this.y = options.y ?? 0;
     this.min = options.min ?? 0;
     this.max = options.max ?? 100;
     this._value = options.value ?? this.min;
@@ -41,15 +53,20 @@ export class RangeSliderNode extends Graphics {
     this.onValueChange = options.onChange ?? (() => {});
 
     this.handle = new Graphics();
+    this.track = new Graphics();
 
+    this._updateHandlePosition();
+
+    this.addChild(this.track);
+
+    this._draw();
     this._initHandle();
     this._initText(options.text ?? '');
-    this._draw();
 
-    this.eventMode = 'static';
-    this.cursor = 'pointer';
+    this.track.eventMode = 'static';
+    this.track.cursor = 'pointer';
 
-    this.on('pointerdown', this._onTrackDown, this);
+    this.track.on('pointerdown', this._onTrackDown, this);
   }
 
   public get value(): number {
@@ -70,7 +87,7 @@ export class RangeSliderNode extends Graphics {
     this.handle
       .circle(0, 0, this.handleRadius)
       .fill(this.handleColor)
-      .stroke(this.borderColor);
+      .stroke(this.handleBorderColor);
 
     this.handle.on('pointerdown', this._onDragStart, this);
     this.handle.on('pointermove', this._onDragMove, this);
@@ -83,35 +100,40 @@ export class RangeSliderNode extends Graphics {
   private _initText(text: string) {
     this.text = new Text({
       text: text,
-      x: this.width / 2,
-      y: this.y - this.height - 5,
+      x: this.sliderWidth / 2,
+      y: this.y - this.handle.height,
       style: new TextStyle({ fontSize: 12 }),
     });
+    this.text.anchor.set(0.5);
 
     this.addChild(this.text);
   }
 
   private _draw() {
-    this.clear();
-
-    this.roundRect(
-      0,
-      -this.sliderHeight / 2,
-      this.sliderWidth,
-      this.sliderHeight,
-      this.sliderHeight / 2,
-    ).fill(this.trackColor);
-
-    const activeWidth = this.handle.x;
-    if (activeWidth > 0) {
-      this.roundRect(
+    this.track
+      .clear()
+      .roundRect(
         0,
         -this.sliderHeight / 2,
-        activeWidth,
+        this.sliderWidth,
         this.sliderHeight,
-        this.sliderHeight / 2,
-      );
-      this.fill(this.fillColor);
+        5,
+      )
+      .fill(this.trackColor)
+      .stroke({ color: this.borderColor, width: 1 });
+
+    const activeWidth = this.handle.x;
+
+    if (activeWidth > 0) {
+      this.track
+        .roundRect(
+          1,
+          -this.sliderHeight / 2 + 1,
+          activeWidth - 1,
+          this.sliderHeight - 1,
+          5,
+        )
+        .fill(this.fillColor);
     }
   }
 
