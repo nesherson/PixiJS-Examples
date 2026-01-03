@@ -1,6 +1,7 @@
 import { Container } from 'pixi.js';
 import { ButtonNode, type ButtonNodeOptions } from './ButtonNode';
 import { CheckboxNode } from './CheckboxNode';
+import { RangeSliderNode, type RangeSliderOptions } from './RangeSliderNode';
 
 interface SimpleToolbarNodeOptions {
   x: number;
@@ -44,6 +45,19 @@ export class SimpleToolbarNode extends Container {
     showOrderCb.onCheckedChanged = onChange;
 
     this.addChild(showOrderCb);
+
+    return this;
+  }
+
+  public addSlider(options: RangeSliderOptions = {}) {
+    const lastItem = this.children[this.children.length - 1];
+    const slider = new RangeSliderNode({
+      ...options,
+      x: lastItem ? lastItem.x + lastItem.width + 10 : 0,
+      y: 0,
+    });
+
+    this.addChild(slider);
 
     return this;
   }

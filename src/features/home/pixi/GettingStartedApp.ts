@@ -3,6 +3,7 @@ import {
   Assets,
   Container,
   FederatedPointerEvent,
+  Rectangle,
   Sprite,
   Text,
   TextStyle,
@@ -11,6 +12,7 @@ import {
 } from 'pixi.js';
 
 import { type IPixiApplication } from '@/features/pixiCanvas';
+import { SimpleToolbarNode } from '@/features/pointsAndLines/pixi/SimpleToolbarNode';
 
 export interface GettingStartedAppUpdateProps {
   bunnyTwoMoveSpeed: number;
@@ -18,7 +20,7 @@ export interface GettingStartedAppUpdateProps {
   bunnyFourRotationSpeed: number;
 }
 
-export class GettingStartedApp implements IPixiApplication<GettingStartedAppUpdateProps> {
+export class GettingStartedApp implements IPixiApplication {
   public app: Application;
   private container: HTMLDivElement;
   private bunnyTwoMoveSpeed = 1;
@@ -43,8 +45,17 @@ export class GettingStartedApp implements IPixiApplication<GettingStartedAppUpda
       width: 800,
       height: 600,
     });
+    this.app.stage.eventMode = 'static';
+    this.app.stage.hitArea = new Rectangle(
+      0,
+      0,
+      this.app.screen.width,
+      this.app.screen.height,
+    );
+
     this.container.appendChild(this.app.canvas);
     await this.createBunnies();
+    this.addToolbar();
     this.app.ticker.add(this.animate);
   }
 
@@ -52,10 +63,47 @@ export class GettingStartedApp implements IPixiApplication<GettingStartedAppUpda
     this.app.destroy(true, { children: true });
   }
 
-  update(updateProps: GettingStartedAppUpdateProps): void {
-    this.bunnyTwoMoveSpeed = updateProps.bunnyTwoMoveSpeed;
-    this.bunnyThreeRotationSpeed = updateProps.bunnyThreeRotationSpeed;
-    this.bunnyFourRotationSpeed = updateProps.bunnyFourRotationSpeed;
+  private addToolbar() {
+    const toolbar = new SimpleToolbarNode({
+      x: this.app.screen.width * 0.02,
+      y: this.app.screen.height * 0.07,
+    })
+      .addSlider({
+        min: 1,
+        max: 10,
+        value: 5,
+        width: 200,
+        height: 8,
+        text: 'Bunny 2 Move Speed',
+        onChange: (value) => {
+          this.bunnyTwoMoveSpeed = value;
+        },
+        stage: this.app.stage,
+      })
+      .addSlider({
+        min: 0.1,
+        max: 1,
+        value: 0.5,
+        width: 200,
+        height: 8,
+        text: 'Bunny 3 Rotation Speed',
+        onChange: (value) => {
+          this.bunnyThreeRotationSpeed = value;
+        },
+      })
+      .addSlider({
+        min: 0.1,
+        max: 1,
+        value: 0.5,
+        width: 200,
+        height: 8,
+        text: 'Bunny 4 Rotation Speed',
+        onChange: (value) => {
+          this.bunnyFourRotationSpeed = value;
+        },
+      });
+
+    this.app.stage.addChild(toolbar);
   }
 
   async createBunnies() {
@@ -90,11 +138,12 @@ export class GettingStartedApp implements IPixiApplication<GettingStartedAppUpda
 
     this.bunnyOne.eventMode = 'static';
     this.bunnyOne.on('click', this.bunnyOneClick);
-
-    this.app.stage.addChild(this.bunnyOne);
-    this.app.stage.addChild(this.bunnyTwo);
-    this.app.stage.addChild(this.bunnyThree);
-    this.app.stage.addChild(this.bunnyFour);
+    this.app.stage.addChild(
+      this.bunnyOne,
+      this.bunnyTwo,
+      this.bunnyThree,
+      this.bunnyFour,
+    );
   }
 
   private animate = (time: Ticker) => {
@@ -114,7 +163,8 @@ export class GettingStartedApp implements IPixiApplication<GettingStartedAppUpda
       'bunny-sprite',
     ) as Sprite;
 
-    bunnyThreeSprite.rotation += this.bunnyThreeRotationSpeed * time.deltaTime;
+    bunnyThreeSprite.rotation +=
+      this.bunnyThreeRotationSpeed * time.deltaTime;
 
     this.bunnyFour.x =
       this.app.screen.width * 0.8 +
