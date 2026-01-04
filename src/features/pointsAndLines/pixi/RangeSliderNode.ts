@@ -28,7 +28,6 @@ export class RangeSliderNode extends Container {
   public sliderHeight: number;
   public handleRadius: number;
   public onValueChange: (value: number) => void;
-
   public trackColor: number = 0xdddddd;
   public fillColor: number = 0x3e89f5;
   public handleColor: number = 0xffffff;
@@ -36,10 +35,10 @@ export class RangeSliderNode extends Container {
   public handleBorderColor: number = 0x999999;
 
   private _value: number;
-  private dragging: boolean = false;
-  private handle: Graphics;
-  private track: Graphics;
-  private text?: Text;
+  private _dragging: boolean = false;
+  private _handle: Graphics;
+  private _track: Graphics;
+  private _text?: Text;
 
   constructor(options: RangeSliderOptions = {}) {
     super();
@@ -54,21 +53,21 @@ export class RangeSliderNode extends Container {
     this.handleRadius = options.handleRadius ?? 10;
     this.onValueChange = options.onChange ?? (() => {});
 
-    this.handle = new Graphics();
-    this.track = new Graphics();
+    this._handle = new Graphics();
+    this._track = new Graphics();
 
-    this._updateHandlePosition();
+    this.updateHandlePosition();
 
-    this.addChild(this.track);
+    this.addChild(this._track);
 
-    this._draw();
-    this._initHandle();
-    this._initText(options.text ?? '');
+    this.draw();
+    this.initHandle();
+    this.initText(options.text ?? '');
 
-    this.track.eventMode = 'static';
-    this.track.cursor = 'pointer';
+    this._track.eventMode = 'static';
+    this._track.cursor = 'pointer';
 
-    this.track.on('pointerdown', this._onTrackDown);
+    this._track.on('pointerdown', this.onTrackDown);
   }
 
   public get value(): number {
@@ -77,40 +76,40 @@ export class RangeSliderNode extends Container {
 
   public set value(newValue: number) {
     this._value = Math.max(this.min, Math.min(this.max, newValue));
-    this._updateHandlePosition();
-    this._draw();
+    this.updateHandlePosition();
+    this.draw();
     this.onValueChange(this._value);
   }
 
-  private _initHandle() {
-    this.handle.eventMode = 'static';
-    this.handle.cursor = 'grab';
+  private initHandle() {
+    this._handle.eventMode = 'static';
+    this._handle.cursor = 'grab';
 
-    this.handle
+    this._handle
       .circle(0, 0, this.handleRadius)
       .fill(this.handleColor)
       .stroke(this.handleBorderColor);
 
-    this.handle.on('pointerdown', this._onDragStart, this);
+    this._handle.on('pointerdown', this.onDragStart, this);
 
-    this.addChild(this.handle);
-    this._updateHandlePosition();
+    this.addChild(this._handle);
+    this.updateHandlePosition();
   }
 
-  private _initText(text: string) {
-    this.text = new Text({
+  private initText(text: string) {
+    this._text = new Text({
       text: text,
       x: this.sliderWidth / 2,
-      y: this.y - this.handle.height,
+      y: this.y - this._handle.height,
       style: new TextStyle({ fontSize: 12 }),
     });
-    this.text.anchor.set(0.5);
+    this._text.anchor.set(0.5);
 
-    this.addChild(this.text);
+    this.addChild(this._text);
   }
 
-  private _draw() {
-    this.track
+  private draw() {
+    this._track
       .clear()
       .roundRect(
         0,
@@ -122,10 +121,10 @@ export class RangeSliderNode extends Container {
       .fill(this.trackColor)
       .stroke({ color: this.borderColor, width: 1 });
 
-    const activeWidth = this.handle.x;
+    const activeWidth = this._handle.x;
 
     if (activeWidth > 0) {
-      this.track
+      this._track
         .roundRect(
           1,
           -this.sliderHeight / 2 + 1,
@@ -137,60 +136,60 @@ export class RangeSliderNode extends Container {
     }
   }
 
-  private _updateHandlePosition() {
+  private updateHandlePosition() {
     const range = this.max - this.min;
     const percent = (this._value - this.min) / range;
-    this.handle.x = percent * this.sliderWidth;
-    this.handle.y = 0;
+    this._handle.x = percent * this.sliderWidth;
+    this._handle.y = 0;
   }
 
-  private _onDragStart(event: FederatedPointerEvent) {
+  private onDragStart(event: FederatedPointerEvent) {
     event.stopPropagation();
 
-    this.dragging = true;
-    this.handle.cursor = 'grabbing';
-    this.handle.alpha = 0.8;
+    this._dragging = true;
+    this._handle.cursor = 'grabbing';
+    this._handle.alpha = 0.8;
 
     const localPos = event.getLocalPosition(this);
     const stage = getStage(this);
 
-    this._updateValueFromX(localPos.x);
+    this.updateValueFromX(localPos.x);
 
     if (stage) {
-      stage.on('pointermove', this._onDragMove);
-      stage.on('pointerup', this._onDragEnd);
+      stage.on('pointermove', this.onDragMove);
+      stage.on('pointerup', this.onDragEnd);
     }
   }
 
-  private _onDragEnd = () => {
-    this.dragging = false;
-    this.handle.cursor = 'grab';
-    this.handle.alpha = 1;
+  private onDragEnd = () => {
+    this._dragging = false;
+    this._handle.cursor = 'grab';
+    this._handle.alpha = 1;
 
     const stage = getStage(this);
 
     if (stage) {
-      stage.off('pointermove', this._onDragMove);
-      stage.off('pointerup', this._onDragEnd);
+      stage.off('pointermove', this.onDragMove);
+      stage.off('pointerup', this.onDragEnd);
     }
   };
 
-  private _onDragMove = (event: FederatedPointerEvent) => {
-    if (!this.dragging) return;
+  private onDragMove = (event: FederatedPointerEvent) => {
+    if (!this._dragging) return;
 
     const localPos = event.getLocalPosition(this);
 
-    this._updateValueFromX(localPos.x);
+    this.updateValueFromX(localPos.x);
   };
 
-  private _onTrackDown(event: FederatedPointerEvent) {
+  private onTrackDown = (event: FederatedPointerEvent) => {
     const localPos = event.getLocalPosition(this);
 
-    this._updateValueFromX(localPos.x);
-    this._onDragStart(event);
-  }
+    this.updateValueFromX(localPos.x);
+    this.onDragStart(event);
+  };
 
-  private _updateValueFromX(x: number) {
+  private updateValueFromX(x: number) {
     const clampedX = Math.max(0, Math.min(this.sliderWidth, x));
     const percent = clampedX / this.sliderWidth;
     const range = this.max - this.min;
