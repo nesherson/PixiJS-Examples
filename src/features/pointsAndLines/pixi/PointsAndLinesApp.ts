@@ -9,15 +9,16 @@ import { StraightLineNode } from './StraightLineNode';
 import { isInArea } from './utils';
 
 export class PointsAndLinesApp implements IPixiApplication {
-  public app: Application;
-  private container: HTMLDivElement;
-
   private BUTTONS_CONTAINER_HEIGHT = 80;
+
+  private app: Application;
+  private container: HTMLDivElement;
   private selectedPoints: Set<PointNode> = new Set();
   private isSelecting = false;
   private selectionStartPoint: Point | null = null;
   private selectionArea: RectangleNode | null = null;
   private showOrder?: boolean = undefined;
+  private isAnimatingLines = false;
 
   constructor(container: HTMLDivElement) {
     this.app = new Application();
@@ -58,12 +59,13 @@ export class PointsAndLinesApp implements IPixiApplication {
       x: this.app.screen.width * 0.02,
       y: this.app.screen.height * 0.02,
     })
-      .addButton('Draw straight', () => this.drawLines('straight'))
-      .addButton('Draw curved', () => this.drawLines('curved'))
+      .addButton('Draw straight', async () => await this.drawLines('straight'))
+      .addButton('Draw curved', async () => await this.drawLines('curved'))
       .addButton('Select all', this.selectAllPoints)
       .addButton('Clear all', this.clearAll)
       .addButton('Draw random points', this.drawRandomPoints)
-      .addCheckbox('Show order', this.onShowOrderChanged);
+      .addCheckbox('Show order', this.onShowOrderChanged)
+      .addCheckbox('Animate lines', this.onAnimateLinesChanged);
 
     this.app.stage.addChild(buttonsContainer);
   }
@@ -183,7 +185,7 @@ export class PointsAndLinesApp implements IPixiApplication {
     });
   };
 
-  private drawStraightLines = () => {
+  private drawStraightLines = async () => {
     const selectedPoints = Array.from(this.selectedPoints).sort(
       (a, b) => a.order - b.order,
     );
@@ -199,10 +201,16 @@ export class PointsAndLinesApp implements IPixiApplication {
       const newLine = new StraightLineNode(startPoint, endPoint);
 
       this.app.stage.addChild(newLine);
+
+      if (this.isAnimatingLines) {
+        await newLine.animateLine();
+      } else {
+        newLine.draw();
+      }
     }
   };
 
-  private drawCurvedLines = () => {
+  private drawCurvedLines = async () => {
     const selectedPoints = Array.from(this.selectedPoints).sort(
       (a, b) => a.order - b.order,
     );
@@ -265,6 +273,12 @@ export class PointsAndLinesApp implements IPixiApplication {
       );
 
       this.app.stage.addChild(newLine);
+
+      if (this.isAnimatingLines) {
+        await newLine.animateLine();
+      } else {
+        newLine.draw();
+      }
     }
   };
 
@@ -306,11 +320,11 @@ export class PointsAndLinesApp implements IPixiApplication {
     }
   };
 
-  private drawLines = (lineType: string) => {
+  private drawLines = async (lineType: string) => {
     if (lineType === 'straight') {
-      this.drawStraightLines();
+      await this.drawStraightLines();
     } else if (lineType === 'curved') {
-      this.drawCurvedLines();
+      await this.drawCurvedLines();
     }
 
     this.deselectSelectedPoints(true);
@@ -327,6 +341,10 @@ export class PointsAndLinesApp implements IPixiApplication {
 
         pointNode.draw();
       });
+  };
+
+  private onAnimateLinesChanged = (checked: boolean) => {
+    this.isAnimatingLines = checked;
   };
 
   private isInsideButtonsContainer = (y: number) => {
