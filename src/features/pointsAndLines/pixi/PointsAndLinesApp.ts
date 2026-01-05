@@ -58,8 +58,8 @@ export class PointsAndLinesApp implements IPixiApplication {
       x: this.app.screen.width * 0.02,
       y: this.app.screen.height * 0.02,
     })
-      .addButton('Draw straight', () => this.drawLines('straight'))
-      .addButton('Draw curved', () => this.drawLines('curved'))
+      .addButton('Draw straight', async () => await this.drawLines('straight'))
+      .addButton('Draw curved', async () => await this.drawLines('curved'))
       .addButton('Select all', this.selectAllPoints)
       .addButton('Clear all', this.clearAll)
       .addButton('Draw random points', this.drawRandomPoints)
@@ -183,7 +183,7 @@ export class PointsAndLinesApp implements IPixiApplication {
     });
   };
 
-  private drawStraightLines = () => {
+  private drawStraightLines = async () => {
     const selectedPoints = Array.from(this.selectedPoints).sort(
       (a, b) => a.order - b.order,
     );
@@ -199,6 +199,8 @@ export class PointsAndLinesApp implements IPixiApplication {
       const newLine = new StraightLineNode(startPoint, endPoint);
 
       this.app.stage.addChild(newLine);
+
+      await newLine.animateLine();
     }
   };
 
@@ -306,9 +308,9 @@ export class PointsAndLinesApp implements IPixiApplication {
     }
   };
 
-  private drawLines = (lineType: string) => {
+  private drawLines = async (lineType: string) => {
     if (lineType === 'straight') {
-      this.drawStraightLines();
+      await this.drawStraightLines();
     } else if (lineType === 'curved') {
       this.drawCurvedLines();
     }
