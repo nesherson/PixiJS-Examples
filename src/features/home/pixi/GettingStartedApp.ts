@@ -22,6 +22,9 @@ export interface GettingStartedAppUpdateProps {
 
 export class GettingStartedApp implements IPixiApplication {
   public app: Application;
+
+  private TOOLBAR_HEIGHT = 80;
+
   private container: HTMLDivElement;
   private bunnyTwoMoveSpeed = 1;
   private bunnyTwoDirection = 1;
@@ -33,6 +36,8 @@ export class GettingStartedApp implements IPixiApplication {
   private bunnyTwo!: Container;
   private bunnyThree!: Container;
   private bunnyFour!: Container;
+  private bunnyFive!: Container;
+  private isDraggingBunnyFive = false;
 
   constructor(container: HTMLDivElement) {
     this.app = new Application();
@@ -52,6 +57,8 @@ export class GettingStartedApp implements IPixiApplication {
       this.app.screen.width,
       this.app.screen.height,
     );
+    this.app.stage.on('pointermove', this.stagePointerMove);
+    this.app.stage.on('pointerup', this.stagePointerUp);
 
     this.container.appendChild(this.app.canvas);
     await this.createBunnies();
@@ -135,14 +142,23 @@ export class GettingStartedApp implements IPixiApplication {
       texture,
       'Bunny 4',
     );
+    this.bunnyFive = this.createBunny(
+      this.app.screen.width * 0.5,
+      this.app.screen.height * 0.5,
+      texture,
+      'Bunny 5',
+    );
 
     this.bunnyOne.eventMode = 'static';
     this.bunnyOne.on('click', this.bunnyOneClick);
+    this.bunnyFive.eventMode = 'dynamic';
+    this.bunnyFive.on('pointerdown', this.bunnyFivePointerDown);
     this.app.stage.addChild(
       this.bunnyOne,
       this.bunnyTwo,
       this.bunnyThree,
       this.bunnyFour,
+      this.bunnyFive,
     );
   }
 
@@ -163,8 +179,7 @@ export class GettingStartedApp implements IPixiApplication {
       'bunny-sprite',
     ) as Sprite;
 
-    bunnyThreeSprite.rotation +=
-      this.bunnyThreeRotationSpeed * time.deltaTime;
+    bunnyThreeSprite.rotation += this.bunnyThreeRotationSpeed * time.deltaTime;
 
     this.bunnyFour.x =
       this.app.screen.width * 0.8 +
@@ -204,4 +219,25 @@ export class GettingStartedApp implements IPixiApplication {
       container.scale.y = 1;
     }
   }
+
+  private bunnyFivePointerDown = () => {
+    this.isDraggingBunnyFive = true;
+  };
+
+  private stagePointerMove = (e: FederatedPointerEvent) => {
+    if (this.isDraggingBunnyFive && !this.isInsideToolbar(e.global.y)) {
+      this.bunnyFive.x = e.global.x;
+      this.bunnyFive.y = e.global.y;
+    }
+  };
+
+  private stagePointerUp = () => {
+    if (this.isDraggingBunnyFive) {
+      this.isDraggingBunnyFive = false;
+    }
+  };
+
+  private isInsideToolbar = (y: number) => {
+    return y < this.TOOLBAR_HEIGHT;
+  };
 }
