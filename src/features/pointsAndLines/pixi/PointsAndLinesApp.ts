@@ -210,7 +210,7 @@ export class PointsAndLinesApp implements IPixiApplication {
     }
   };
 
-  private drawCurvedLines = () => {
+  private drawCurvedLines = async () => {
     const selectedPoints = Array.from(this.selectedPoints).sort(
       (a, b) => a.order - b.order,
     );
@@ -273,6 +273,12 @@ export class PointsAndLinesApp implements IPixiApplication {
       );
 
       this.app.stage.addChild(newLine);
+
+      if (this.isAnimatingLines) {
+        await newLine.animateLine();
+      } else {
+        newLine.draw();
+      }
     }
   };
 
@@ -318,7 +324,7 @@ export class PointsAndLinesApp implements IPixiApplication {
     if (lineType === 'straight') {
       await this.drawStraightLines();
     } else if (lineType === 'curved') {
-      this.drawCurvedLines();
+      await this.drawCurvedLines();
     }
 
     this.deselectSelectedPoints(true);

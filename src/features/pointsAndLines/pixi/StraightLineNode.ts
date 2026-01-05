@@ -1,5 +1,6 @@
-import { Graphics, Point, resolveCompressedTextureUrl, Ticker } from 'pixi.js';
+import { Graphics, Point, Ticker } from 'pixi.js';
 import type { PointNode } from './PointNode';
+import { lerp } from './utils';
 
 export class StraightLineNode extends Graphics {
   private startPoint: Point;
@@ -37,14 +38,11 @@ export class StraightLineNode extends Graphics {
   }
 
   public draw(t: number = 1) {
-    const currentX =
-      this.startPoint.x + (this.endPoint.x - this.startPoint.x) * t;
-    const currentY =
-      this.startPoint.y + (this.endPoint.y - this.startPoint.y) * t;
+    const currentPoint = lerp(this.startPoint, this.endPoint, t);
 
     this.clear()
       .moveTo(this.startPoint.x, this.startPoint.y)
-      .lineTo(currentX, currentY)
+      .lineTo(currentPoint.x, currentPoint.y)
       .stroke('#000000');
   }
 }
