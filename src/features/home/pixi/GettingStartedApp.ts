@@ -22,6 +22,9 @@ export interface GettingStartedAppUpdateProps {
 
 export class GettingStartedApp implements IPixiApplication {
   public app: Application;
+
+  private TOOLBAR_HEIGHT = 80;
+
   private container: HTMLDivElement;
   private bunnyTwoMoveSpeed = 1;
   private bunnyTwoDirection = 1;
@@ -222,7 +225,7 @@ export class GettingStartedApp implements IPixiApplication {
   };
 
   private stagePointerMove = (e: FederatedPointerEvent) => {
-    if (this.isDraggingBunnyFive) {
+    if (this.isDraggingBunnyFive && !this.isInsideToolbar(e.global.y)) {
       this.bunnyFive.x = e.global.x;
       this.bunnyFive.y = e.global.y;
     }
@@ -232,5 +235,9 @@ export class GettingStartedApp implements IPixiApplication {
     if (this.isDraggingBunnyFive) {
       this.isDraggingBunnyFive = false;
     }
+  };
+
+  private isInsideToolbar = (y: number) => {
+    return y < this.TOOLBAR_HEIGHT;
   };
 }
