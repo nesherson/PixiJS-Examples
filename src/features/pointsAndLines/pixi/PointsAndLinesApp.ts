@@ -9,15 +9,16 @@ import { StraightLineNode } from './StraightLineNode';
 import { isInArea } from './utils';
 
 export class PointsAndLinesApp implements IPixiApplication {
-  public app: Application;
-  private container: HTMLDivElement;
-
   private BUTTONS_CONTAINER_HEIGHT = 80;
+
+  private app: Application;
+  private container: HTMLDivElement;
   private selectedPoints: Set<PointNode> = new Set();
   private isSelecting = false;
   private selectionStartPoint: Point | null = null;
   private selectionArea: RectangleNode | null = null;
   private showOrder?: boolean = undefined;
+  private isAnimatingLines = false;
 
   constructor(container: HTMLDivElement) {
     this.app = new Application();
@@ -63,7 +64,8 @@ export class PointsAndLinesApp implements IPixiApplication {
       .addButton('Select all', this.selectAllPoints)
       .addButton('Clear all', this.clearAll)
       .addButton('Draw random points', this.drawRandomPoints)
-      .addCheckbox('Show order', this.onShowOrderChanged);
+      .addCheckbox('Show order', this.onShowOrderChanged)
+      .addCheckbox('Animate lines', this.onAnimateLinesChanged);
 
     this.app.stage.addChild(buttonsContainer);
   }
@@ -200,7 +202,11 @@ export class PointsAndLinesApp implements IPixiApplication {
 
       this.app.stage.addChild(newLine);
 
-      await newLine.animateLine();
+      if (this.isAnimatingLines) {
+        await newLine.animateLine();
+      } else {
+        newLine.draw();
+      }
     }
   };
 
@@ -329,6 +335,10 @@ export class PointsAndLinesApp implements IPixiApplication {
 
         pointNode.draw();
       });
+  };
+
+  private onAnimateLinesChanged = (checked: boolean) => {
+    this.isAnimatingLines = checked;
   };
 
   private isInsideButtonsContainer = (y: number) => {

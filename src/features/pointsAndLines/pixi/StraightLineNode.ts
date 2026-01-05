@@ -36,7 +36,7 @@ export class StraightLineNode extends Graphics {
     });
   }
 
-  private draw(t: number) {
+  public draw(t: number = 1) {
     const currentX =
       this.startPoint.x + (this.endPoint.x - this.startPoint.x) * t;
     const currentY =
