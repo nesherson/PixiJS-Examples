@@ -54,7 +54,7 @@ export class SimpleToolbarNode extends Container {
     const slider = new RangeSliderNode({
       ...options,
       x: lastItem ? lastItem.x + lastItem.width + 10 : 0,
-      y: 0,
+      y: this.height / 2,
     });
 
     this.addChild(slider);
