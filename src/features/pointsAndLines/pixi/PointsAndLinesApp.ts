@@ -19,6 +19,7 @@ export class PointsAndLinesApp implements IPixiApplication {
   private selectionArea: RectangleNode | null = null;
   private showOrder?: boolean = undefined;
   private isAnimatingLines = false;
+  private lineDrawingAnimationSpeed = 0.02;
 
   constructor(container: HTMLDivElement) {
     this.app = new Application();
@@ -65,7 +66,14 @@ export class PointsAndLinesApp implements IPixiApplication {
       .addButton('Clear all', this.clearAll)
       .addButton('Draw random points', this.drawRandomPoints)
       .addCheckbox('Show order', this.onShowOrderChanged)
-      .addCheckbox('Animate lines', this.onAnimateLinesChanged);
+      .addCheckbox('Animate lines', this.onAnimateLinesChanged)
+      .addSlider({
+        text: 'Animation speed',
+        min: 0.01,
+        max: 0.2,
+        value: 0.05,
+        onChange: this.onAnimationSpeedChanged,
+      });
 
     this.app.stage.addChild(buttonsContainer);
   }
@@ -198,7 +206,11 @@ export class PointsAndLinesApp implements IPixiApplication {
       const startPoint = selectedPoints[i];
       const endPoint = selectedPoints[i + 1];
 
-      const newLine = new StraightLineNode(startPoint, endPoint);
+      const newLine = new StraightLineNode(
+        startPoint,
+        endPoint,
+        this.lineDrawingAnimationSpeed,
+      );
 
       this.app.stage.addChild(newLine);
 
@@ -349,5 +361,9 @@ export class PointsAndLinesApp implements IPixiApplication {
 
   private isInsideButtonsContainer = (y: number) => {
     return y < this.BUTTONS_CONTAINER_HEIGHT;
+  };
+
+  private onAnimationSpeedChanged = (value: number) => {
+    this.lineDrawingAnimationSpeed = value;
   };
 }
