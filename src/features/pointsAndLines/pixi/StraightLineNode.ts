@@ -6,14 +6,19 @@ export class StraightLineNode extends Graphics {
   private startPoint: Point;
   private endPoint: Point;
   private progress = 0;
-  private animationSpeed = 0.02;
+  private animationSpeed;
 
-  constructor(startPoint: PointNode, endPoint: PointNode) {
+  constructor(
+    startPoint: PointNode,
+    endPoint: PointNode,
+    animationSpeed?: number,
+  ) {
     super();
 
     this.startPoint = new Point(startPoint.x, startPoint.y);
     this.endPoint = new Point(endPoint.x, endPoint.y);
     this.label = 'straight-line-node';
+    this.animationSpeed = animationSpeed ?? 0.02;
   }
 
   public animateLine(): Promise<void> {

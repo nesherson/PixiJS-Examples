@@ -6,15 +6,21 @@ export class CurvedLineNode extends Graphics {
   private controlPoint: Point;
   private endPoint: Point;
   private progress = 0;
-  private animationSpeed = 0.02;
+  private animationSpeed;
 
-  constructor(startPoint: Point, controlPoint: Point, endPoint: Point) {
+  constructor(
+    startPoint: Point,
+    controlPoint: Point,
+    endPoint: Point,
+    animationSpeed?: number,
+  ) {
     super();
 
     this.startPoint = startPoint;
     this.controlPoint = controlPoint;
     this.endPoint = endPoint;
     this.label = 'curved-line-node';
+    this.animationSpeed = animationSpeed ?? 0.02;
   }
 
   public animateLine(): Promise<void> {
