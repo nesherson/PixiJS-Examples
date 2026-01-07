@@ -100,7 +100,7 @@ export class RangeSliderNode extends Container {
     this._text = new Text({
       text: text,
       x: this.sliderWidth / 2,
-      y: this.y - this._handle.height,
+      y: -16,
       style: new TextStyle({ fontSize: 12 }),
     });
     this._text.anchor.set(0.5);
