@@ -29,8 +29,7 @@ export class PointsAndLinesApp implements IPixiApplication {
   async init() {
     await this.app.init({
       background: '#ecf0f1',
-      width: 1200,
-      height: 820,
+      resizeTo: this.container,
       antialias: true,
     });
 

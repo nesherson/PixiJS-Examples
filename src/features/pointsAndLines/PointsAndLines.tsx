@@ -4,7 +4,9 @@ import { PointsAndLinesApp } from './pixi/PointsAndLinesApp';
 export function PointsAndLines() {
   return (
     <>
-      <PixiCanvas applicationClass={PointsAndLinesApp} />
+      <div className="h-200">
+        <PixiCanvas applicationClass={PointsAndLinesApp} />
+      </div>
       <div className="mt-2">
         <p>Click on the canvas to create points.</p>
         <p>

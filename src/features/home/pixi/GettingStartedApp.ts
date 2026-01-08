@@ -46,9 +46,8 @@ export class GettingStartedApp implements IPixiApplication {
 
   async init() {
     await this.app.init({
-      background: '#1099bb',
-      width: 800,
-      height: 600,
+      background: '#ecf0f1',
+      resizeTo: this.container,
     });
     this.app.stage.eventMode = 'static';
     this.app.stage.hitArea = new Rectangle(
