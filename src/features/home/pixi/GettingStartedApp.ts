@@ -5,26 +5,14 @@ import {
   FederatedPointerEvent,
   Rectangle,
   Sprite,
-  Text,
   TextStyle,
-  type Texture,
-  type Ticker,
+  Texture,
+  Ticker,
+  Text,
+  type ApplicationOptions,
 } from 'pixi.js';
 
-import { type IPixiApplication } from '@/features/pixiCanvas';
-import { SimpleToolbarNode } from '@/features/pointsAndLines/pixi/SimpleToolbarNode';
-
-export interface GettingStartedAppUpdateProps {
-  bunnyTwoMoveSpeed: number;
-  bunnyThreeRotationSpeed: number;
-  bunnyFourRotationSpeed: number;
-}
-
-export class GettingStartedApp implements IPixiApplication {
-  public app: Application;
-
-  private TOOLBAR_HEIGHT = 80;
-
+export class GettingStartedApp extends Application {
   private container: HTMLDivElement;
   private bunnyTwoMoveSpeed = 1;
   private bunnyTwoDirection = 1;
@@ -40,76 +28,25 @@ export class GettingStartedApp implements IPixiApplication {
   private isDraggingBunnyFive = false;
 
   constructor(container: HTMLDivElement) {
-    this.app = new Application();
+    super();
     this.container = container;
   }
 
-  async init() {
-    await this.app.init({
-      background: '#ecf0f1',
-      resizeTo: this.container,
-    });
-    this.app.stage.eventMode = 'static';
-    this.app.stage.hitArea = new Rectangle(
+  public async initialize(options?: Partial<ApplicationOptions>) {
+    await this.init(options);
+    this.stage.eventMode = 'static';
+    this.stage.hitArea = new Rectangle(
       0,
       0,
-      this.app.screen.width,
-      this.app.screen.height,
+      this.screen.width,
+      this.screen.height,
     );
-    this.app.stage.on('pointermove', this.stagePointerMove);
-    this.app.stage.on('pointerup', this.stagePointerUp);
+    this.stage.on('pointermove', this.stagePointerMove);
+    this.stage.on('pointerup', this.stagePointerUp);
 
-    this.container.appendChild(this.app.canvas);
+    this.container.appendChild(this.canvas);
     await this.createBunnies();
-    this.addToolbar();
-    this.app.ticker.add(this.animate);
-  }
-
-  destroy() {
-    this.app.destroy(true, { children: true });
-  }
-
-  private addToolbar() {
-    const toolbar = new SimpleToolbarNode({
-      x: this.app.screen.width * 0.02,
-      y: this.app.screen.height * 0.07,
-    })
-      .addSlider({
-        min: 1,
-        max: 10,
-        value: 5,
-        width: 200,
-        height: 8,
-        text: 'Bunny 2 Move Speed',
-        onChange: (value) => {
-          this.bunnyTwoMoveSpeed = value;
-        },
-        stage: this.app.stage,
-      })
-      .addSlider({
-        min: 0.1,
-        max: 1,
-        value: 0.5,
-        width: 200,
-        height: 8,
-        text: 'Bunny 3 Rotation Speed',
-        onChange: (value) => {
-          this.bunnyThreeRotationSpeed = value;
-        },
-      })
-      .addSlider({
-        min: 0.1,
-        max: 1,
-        value: 0.5,
-        width: 200,
-        height: 8,
-        text: 'Bunny 4 Rotation Speed',
-        onChange: (value) => {
-          this.bunnyFourRotationSpeed = value;
-        },
-      });
-
-    this.app.stage.addChild(toolbar);
+    this.ticker.add(this.animate);
   }
 
   async createBunnies() {
@@ -118,32 +55,32 @@ export class GettingStartedApp implements IPixiApplication {
     );
 
     this.bunnyOne = this.createBunny(
-      this.app.screen.width * 0.2,
-      this.app.screen.height * 0.2,
+      this.screen.width * 0.2,
+      this.screen.height * 0.2,
       texture,
       'Bunny 1',
     );
     this.bunnyTwo = this.createBunny(
-      this.app.screen.width * 0.8,
-      this.app.screen.height * 0.2,
+      this.screen.width * 0.8,
+      this.screen.height * 0.2,
       texture,
       'Bunny 2',
     );
     this.bunnyThree = this.createBunny(
-      this.app.screen.width * 0.2,
-      this.app.screen.height * 0.8,
+      this.screen.width * 0.2,
+      this.screen.height * 0.8,
       texture,
       'Bunny 3',
     );
     this.bunnyFour = this.createBunny(
-      this.app.screen.width * 0.8,
-      this.app.screen.height * 0.8,
+      this.screen.width * 0.8,
+      this.screen.height * 0.8,
       texture,
       'Bunny 4',
     );
     this.bunnyFive = this.createBunny(
-      this.app.screen.width * 0.5,
-      this.app.screen.height * 0.5,
+      this.screen.width * 0.5,
+      this.screen.height * 0.5,
       texture,
       'Bunny 5',
     );
@@ -152,7 +89,7 @@ export class GettingStartedApp implements IPixiApplication {
     this.bunnyOne.on('click', this.bunnyOneClick);
     this.bunnyFive.eventMode = 'dynamic';
     this.bunnyFive.on('pointerdown', this.bunnyFivePointerDown);
-    this.app.stage.addChild(
+    this.stage.addChild(
       this.bunnyOne,
       this.bunnyTwo,
       this.bunnyThree,
@@ -165,9 +102,9 @@ export class GettingStartedApp implements IPixiApplication {
     this.bunnyFourAngle =
       this.bunnyFourAngle + this.bunnyFourRotationSpeed * time.deltaTime;
 
-    if (this.bunnyTwo.x >= this.app.screen.width * 0.9) {
+    if (this.bunnyTwo.x >= this.screen.width * 0.9) {
       this.bunnyTwoDirection = -1;
-    } else if (this.bunnyTwo.x <= this.app.screen.width * 0.7) {
+    } else if (this.bunnyTwo.x <= this.screen.width * 0.7) {
       this.bunnyTwoDirection = 1;
     }
 
@@ -181,10 +118,10 @@ export class GettingStartedApp implements IPixiApplication {
     bunnyThreeSprite.rotation += this.bunnyThreeRotationSpeed * time.deltaTime;
 
     this.bunnyFour.x =
-      this.app.screen.width * 0.8 +
+      this.screen.width * 0.8 +
       Math.cos(this.bunnyFourAngle) * this.bunnyFourRadius;
     this.bunnyFour.y =
-      this.app.screen.height * 0.8 +
+      this.screen.height * 0.8 +
       Math.sin(this.bunnyFourAngle) * this.bunnyFourRadius;
   };
 
@@ -207,9 +144,20 @@ export class GettingStartedApp implements IPixiApplication {
     return bunnyContainer;
   }
 
-  private bunnyOneClick(e: FederatedPointerEvent) {
-    const container = e.currentTarget as Container;
+  public setBunnyTwoMoveSpeed(speed: number) {
+    this.bunnyTwoMoveSpeed = speed;
+  }
 
+  public setBunnyThreeRotationSpeed(speed: number) {
+    this.bunnyThreeRotationSpeed = speed;
+  }
+
+  public setBunnyFourRotationSpeed(speed: number) {
+    this.bunnyFourRotationSpeed = speed;
+  }
+
+  private bunnyOneClick = (e: FederatedPointerEvent) => {
+    const container = e.currentTarget as Container;
     if (container.scale.x === 1 && container.scale.y === 1) {
       container.scale.x = 1.5;
       container.scale.y = 1.5;
@@ -217,14 +165,14 @@ export class GettingStartedApp implements IPixiApplication {
       container.scale.x = 1;
       container.scale.y = 1;
     }
-  }
+  };
 
   private bunnyFivePointerDown = () => {
     this.isDraggingBunnyFive = true;
   };
 
   private stagePointerMove = (e: FederatedPointerEvent) => {
-    if (this.isDraggingBunnyFive && !this.isInsideToolbar(e.global.y)) {
+    if (this.isDraggingBunnyFive) {
       this.bunnyFive.x = e.global.x;
       this.bunnyFive.y = e.global.y;
     }
@@ -234,9 +182,5 @@ export class GettingStartedApp implements IPixiApplication {
     if (this.isDraggingBunnyFive) {
       this.isDraggingBunnyFive = false;
     }
-  };
-
-  private isInsideToolbar = (y: number) => {
-    return y < this.TOOLBAR_HEIGHT;
   };
 }
