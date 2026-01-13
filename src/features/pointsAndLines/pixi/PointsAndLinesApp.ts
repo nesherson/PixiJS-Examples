@@ -1,17 +1,18 @@
-import { Application, FederatedPointerEvent, Point, Rectangle } from 'pixi.js';
+import {
+  Application,
+  FederatedPointerEvent,
+  Point,
+  Rectangle,
+  type ApplicationOptions,
+} from 'pixi.js';
 
-import type { IPixiApplication } from '@/features/pixiCanvas';
 import { CurvedLineNode } from './CurvedLineNode';
 import { PointNode } from './PointNode';
 import { RectangleNode } from './RectangleNode';
-import { SimpleToolbarNode } from './SimpleToolbarNode';
 import { StraightLineNode } from './StraightLineNode';
 import { isInArea } from './utils';
 
-export class PointsAndLinesApp implements IPixiApplication {
-  private BUTTONS_CONTAINER_HEIGHT = 80;
-
-  private app: Application;
+export class PointsAndLinesApp extends Application {
   private container: HTMLDivElement;
   private selectedPoints: Set<PointNode> = new Set();
   private isSelecting = false;
@@ -22,77 +23,51 @@ export class PointsAndLinesApp implements IPixiApplication {
   private lineDrawingAnimationSpeed = 0.02;
 
   constructor(container: HTMLDivElement) {
-    this.app = new Application();
+    super();
+
     this.container = container;
   }
 
-  async init() {
-    await this.app.init({
-      background: '#ecf0f1',
-      resizeTo: this.container,
-      antialias: true,
-    });
+  public async initialize(options?: Partial<ApplicationOptions>) {
+    await this.init(options);
 
-    this.container.appendChild(this.app.canvas);
+    this.container.appendChild(this.canvas);
 
-    this.app.stage.eventMode = 'static';
-    this.app.stage.hitArea = new Rectangle(
+    this.stage.eventMode = 'static';
+    this.stage.hitArea = new Rectangle(
       0,
       0,
-      this.app.screen.width,
-      this.app.screen.height,
+      this.screen.width,
+      this.screen.height,
     );
 
-    this.addToolbar();
-
-    this.app.stage.on('pointerdown', this.stagePointerDown);
-    this.app.stage.on('pointerup', this.stagePointerUp);
-    this.app.stage.on('mousemove', this.stageMouseMove);
+    this.stage.on('pointerdown', this.stagePointerDown);
+    this.stage.on('pointerup', this.stagePointerUp);
+    this.stage.on('mousemove', this.stageMouseMove);
   }
 
-  destroy() {
-    this.app.destroy(true, { children: true });
+  public setLineDrawingAnimationSpeed(speed: number) {
+    this.lineDrawingAnimationSpeed = speed;
   }
 
-  private addToolbar() {
-    const buttonsContainer = new SimpleToolbarNode({
-      x: this.app.screen.width * 0.02,
-      y: this.app.screen.height * 0.02,
-    })
-      .addButton('Draw straight', async () => await this.drawLines('straight'))
-      .addButton('Draw curved', async () => await this.drawLines('curved'))
-      .addButton('Select all', this.selectAllPoints)
-      .addButton('Clear all', this.clearAll)
-      .addButton('Draw random points', this.drawRandomPoints)
-      .addCheckbox('Show order', this.onShowOrderChanged)
-      .addCheckbox('Animate lines', this.onAnimateLinesChanged)
-      .addSlider({
-        text: 'Animation speed',
-        min: 0.01,
-        max: 0.2,
-        value: 0.05,
-        onChange: this.onAnimationSpeedChanged,
-      });
-
-    this.app.stage.addChild(buttonsContainer);
+  public setIsAnimatingLines(isAnimating: boolean) {
+    this.isAnimatingLines = isAnimating;
   }
 
   private stagePointerDown = (e: FederatedPointerEvent) => {
-    if (e.target !== this.app.stage) return;
+    if (e.target !== this.stage) return;
     if (e.button === 1) return;
 
     const { x, y } = e.getLocalPosition(e.currentTarget);
-
-    if (this.isInsideButtonsContainer(y)) return;
 
     if (e.ctrlKey) {
       this.isSelecting = true;
       this.selectionStartPoint = new Point(x, y);
       this.selectionArea = new RectangleNode(x, y, 1, 1);
 
-      this.app.stage.addChild(this.selectionArea);
+      this.stage.addChild(this.selectionArea);
     } else {
-      const points = this.app.stage.children.filter(
+      const points = this.stage.children.filter(
         (c) => c.label === 'point-node',
       );
 
@@ -100,7 +75,7 @@ export class PointsAndLinesApp implements IPixiApplication {
 
       pointNode.point.on('click', this.onPointClick);
 
-      this.app.stage.addChild(pointNode);
+      this.stage.addChild(pointNode);
     }
   };
 
@@ -109,8 +84,6 @@ export class PointsAndLinesApp implements IPixiApplication {
       return;
 
     const { x, y } = e.getLocalPosition(e.currentTarget);
-
-    if (this.isInsideButtonsContainer(y)) return;
 
     const width = x - this.selectionStartPoint.x;
     const height = y - this.selectionStartPoint.y;
@@ -127,9 +100,7 @@ export class PointsAndLinesApp implements IPixiApplication {
   private stagePointerUp = () => {
     if (!this.isSelecting || !this.selectionArea) return;
 
-    const points = this.app.stage.children.filter(
-      (c) => c.label === 'point-node',
-    );
+    const points = this.stage.children.filter((c) => c.label === 'point-node');
     const pointsInArea = (
       points.filter((p) =>
         isInArea(this.selectionArea!, p.x, p.y),
@@ -141,7 +112,7 @@ export class PointsAndLinesApp implements IPixiApplication {
       this.selectedPoints.add(p);
     });
 
-    this.app.stage.removeChild(this.selectionArea);
+    this.stage.removeChild(this.selectionArea);
     this.isSelecting = false;
     this.selectionArea = null;
     this.selectionStartPoint = null;
@@ -177,9 +148,9 @@ export class PointsAndLinesApp implements IPixiApplication {
     this.selectedPoints.clear();
   };
 
-  private selectAllPoints = () => {
+  public selectAllPoints = () => {
     const pointsToSelect = (
-      this.app.stage.getChildrenByLabel('point-node') as PointNode[]
+      this.stage.getChildrenByLabel('point-node') as PointNode[]
     ).filter((p) => p.canBeSelected);
 
     if (pointsToSelect.length === 0) return;
@@ -211,7 +182,7 @@ export class PointsAndLinesApp implements IPixiApplication {
         this.lineDrawingAnimationSpeed,
       );
 
-      this.app.stage.addChild(newLine);
+      this.stage.addChild(newLine);
 
       if (this.isAnimatingLines) {
         await newLine.animateLine();
@@ -283,7 +254,7 @@ export class PointsAndLinesApp implements IPixiApplication {
         new Point(endPoint.x, endPoint.y),
       );
 
-      this.app.stage.addChild(newLine);
+      this.stage.addChild(newLine);
 
       if (this.isAnimatingLines) {
         await newLine.animateLine();
@@ -293,45 +264,40 @@ export class PointsAndLinesApp implements IPixiApplication {
     }
   };
 
-  private clearAll = () => {
+  public clearAll = () => {
     const labelsToCheck = [
       'point-node',
       'straight-line-node',
       'curved-line-node',
     ];
-    const nodesToRemove = this.app.stage.children.filter((c) =>
+    const nodesToRemove = this.stage.children.filter((c) =>
       labelsToCheck.includes(c.label),
     );
 
-    nodesToRemove.forEach((n) => this.app.stage.removeChild(n));
+    nodesToRemove.forEach((n) => this.stage.removeChild(n));
     this.selectedPoints.clear();
   };
 
-  private drawRandomPoints = () => {
+  public drawRandomPoints = () => {
     const count = Math.floor(Math.random() * 10) + 1;
     const padding = 15;
-    const innerWidth = this.app.screen.width - padding * 2;
-    const innerHeight = this.app.screen.height - padding * 2;
+    const innerWidth = this.screen.width - padding * 2;
+    const innerHeight = this.screen.height - padding * 2;
     let nextIndex =
-      this.app.stage.children.filter((c) => c.label === 'point-node').length +
-      1;
+      this.stage.children.filter((c) => c.label === 'point-node').length + 1;
 
     for (let i = 0; i < count; i++) {
       const x = Math.random() * innerWidth + padding;
-      let y = Math.random() * innerHeight + padding;
-
-      while (this.isInsideButtonsContainer(y)) {
-        y = Math.random() * innerHeight + padding;
-      }
-
+      const y = Math.random() * innerHeight + padding;
       const point = new PointNode(x, y, nextIndex, this.showOrder);
-      this.app.stage.addChild(point);
+
+      this.stage.addChild(point);
 
       nextIndex++;
     }
   };
 
-  private drawLines = async (lineType: string) => {
+  public drawLines = async (lineType: string) => {
     if (lineType === 'straight') {
       await this.drawStraightLines();
     } else if (lineType === 'curved') {
@@ -339,30 +305,5 @@ export class PointsAndLinesApp implements IPixiApplication {
     }
 
     this.deselectSelectedPoints(true);
-  };
-
-  private onShowOrderChanged = (checked: boolean) => {
-    this.app.stage.children
-      .filter((c) => c.label === 'point-node')
-      .forEach((point) => {
-        const pointNode = point as PointNode;
-
-        this.showOrder = checked;
-        pointNode.showOrder = checked;
-
-        pointNode.draw();
-      });
-  };
-
-  private onAnimateLinesChanged = (checked: boolean) => {
-    this.isAnimatingLines = checked;
-  };
-
-  private isInsideButtonsContainer = (y: number) => {
-    return y < this.BUTTONS_CONTAINER_HEIGHT;
-  };
-
-  private onAnimationSpeedChanged = (value: number) => {
-    this.lineDrawingAnimationSpeed = value;
   };
 }
